@@ -5,10 +5,11 @@
     "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
-    "hono": "^4.7.4"
+    "hono": "^4.7.4",
+    "openai": "^4.87.4"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
-    "wrangler": "^3.109.2"
+    "wrangler": "^3.114.2"
   }
 }
