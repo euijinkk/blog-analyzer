@@ -5,8 +5,10 @@
     "deploy": "wrangler deploy --minify"
   },
   "dependencies": {
+    "@sinclair/typebox": "^0.34.30",
     "fast-xml-parser": "^5.0.9",
     "hono": "^4.7.4",
+    "ky": "^1.7.5",
     "openai": "^4.87.4"
   },
   "devDependencies": {
