@@ -1,9 +1,11 @@
 import { Hono } from "hono";
+import { zValidator } from "@hono/zod-validator";
 import OpenAI from "openai";
 import { BlogAnalysisSchema } from "./schema";
 import { commonPrompt } from "./gen-ai/common-prompt";
 import { fetchTistoryPostsByRSS } from "./blog-fetcher/platform/tistory";
 import { parseBlogIntoString } from "./blog-fetcher/parse-blog";
+import { z } from "zod";
 
 /**
  * TODO:
@@ -41,36 +43,44 @@ export default {
       return c.json(res);
     });
 
-    app.get("/analyze", async (c) => {
-      const blogPosts = await fetchTistoryPostsByRSS(
-        "https://happysisyphe.tistory.com"
-      );
-      const blogString = parseBlogIntoString({ blogPosts });
-      console.log("blogString", blogString);
+    app.post(
+      "/analyze",
+      zValidator(
+        "json",
+        z.object({
+          blogUrl: z.string(),
+        })
+      ),
+      async (c) => {
+        const { blogUrl } = c.req.valid("json");
+        const blogPosts = await fetchTistoryPostsByRSS(blogUrl);
+        const blogString = parseBlogIntoString({ blogPosts });
+        console.log("blogString", blogString);
 
-      const completion = await client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: commonPrompt },
-          {
-            role: "user",
-            content: blogString,
+        const completion = await client.chat.completions.create({
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: commonPrompt },
+            {
+              role: "user",
+              content: blogString,
+            },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "output",
+              description: "분석 리포트 결과",
+              schema: BlogAnalysisSchema,
+            },
           },
-        ],
-        response_format: {
-          type: "json_schema",
-          json_schema: {
-            name: "output",
-            description: "분석 리포트 결과",
-            schema: BlogAnalysisSchema,
-          },
-        },
-      });
+        });
 
-      console.log("completion", completion);
+        console.log("completion", completion);
 
-      return c.body(completion.choices[0].message.content ?? "");
-    });
+        return c.body(completion.choices[0].message.content ?? "");
+      }
+    );
 
     app.get("/test", async (c) => {
       const completion = await client.chat.completions.create({
@@ -89,6 +99,3 @@ export default {
     return app.fetch(request, env, ctx);
   },
 };
-function fetchBlogPosts(arg0: string) {
-  throw new Error("Function not implemented.");
-}
