@@ -1,11 +1,12 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import OpenAI from "openai";
-import { BlogAnalysisSchema } from "./schema";
-import { commonPrompt } from "./gen-ai/common-prompt";
-import { fetchTistoryPostsByRSS } from "./blog-fetcher/platform/tistory";
+import { getBlogPostsFromRSS } from "./blog-fetcher/platform/tistory";
 import { parseBlogIntoString } from "./blog-fetcher/parse-blog";
 import { z } from "zod";
+import { cors } from "hono/cors";
+import { getRssFromUrl } from "./blog-fetcher/getRssFromUrl";
+import { analyzeBlogContent } from "./gen-ai/blog-analysis";
 
 /**
  * TODO:
@@ -29,14 +30,15 @@ export default {
       apiKey: env.OPENAI_API_KEY,
     });
 
+    // origin
+    app.use("*", cors({ origin: "*" }));
+
     app.get("/", (c) => {
       return c.text("Hello Hono!");
     });
 
     app.get("/parse-blog", async (c) => {
-      const res = await fetchTistoryPostsByRSS(
-        "https://happysisyphe.tistory.com"
-      );
+      const res = await getBlogPostsFromRSS("https://happysisyphe.tistory.com");
 
       console.log("res", res);
 
@@ -53,32 +55,20 @@ export default {
       ),
       async (c) => {
         const { blogUrl } = c.req.valid("json");
-        const blogPosts = await fetchTistoryPostsByRSS(blogUrl);
+        const rssUrl = await getRssFromUrl(blogUrl);
+        const blogPosts = await getBlogPostsFromRSS(rssUrl);
         const blogString = parseBlogIntoString({ blogPosts });
         console.log("blogString", blogString);
 
-        const completion = await client.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            { role: "system", content: commonPrompt },
-            {
-              role: "user",
-              content: blogString,
-            },
-          ],
-          response_format: {
-            type: "json_schema",
-            json_schema: {
-              name: "output",
-              description: "분석 리포트 결과",
-              schema: BlogAnalysisSchema,
-            },
-          },
+        // OpenAI API 호출을 분리된 함수로 대체
+        const analysisResult = await analyzeBlogContent({
+          blogContent: blogString,
+          apiKey: env.OPENAI_API_KEY,
         });
 
-        console.log("completion", completion);
+        console.log("analysisResult", analysisResult);
 
-        return c.body(completion.choices[0].message.content ?? "");
+        return c.body(analysisResult);
       }
     );
 
