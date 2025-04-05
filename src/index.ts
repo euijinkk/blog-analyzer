@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import OpenAI from "openai";
-import { getBlogPostsFromRSS } from "./blog-fetcher/platform/tistory";
+import { getBlogPostsFromRSS } from "./blog-fetcher/getBlogPostsFromRSS";
 import { parseBlogIntoString } from "./blog-fetcher/parse-blog";
 import { z } from "zod";
 import { cors } from "hono/cors";
