@@ -1,38 +1,31 @@
 {
+  // 이것은 Wrangler 설정 파일입니다.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "blog-ai-analyzer",
   "main": "src/index.ts",
-  "compatibility_date": "2025-03-19"
-  // "compatibility_flags": [
-  //   "nodejs_compat"
-  // ],
-  // "vars": {
-  //   "MY_VAR": "my-variable"
-  // },
-  // "kv_namespaces": [
-  //   {
-  //     "binding": "MY_KV_NAMESPACE",
-  //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-  //   }
-  // ],
-  // "r2_buckets": [
-  //   {
-  //     "binding": "MY_BUCKET",
-  //     "bucket_name": "my-bucket"
-  //   }
-  // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
-  // "ai": {
-  //   "binding": "AI"
-  // },
-  // "observability": {
-  //   "enabled": true,
-  //   "head_sampling_rate": 1
-  // }
+  "compatibility_date": "2025-03-10",
+
+  // 로그 설정
+  "observability": {
+    "logs": {
+      "enabled": true
+    }
+  },
+
+  // KV 네임스페이스 설정
+  "kv_namespaces": [
+    {
+      "binding": "RATE_LIMITS",
+      "id": "c0e85c619da54bba8161184dface0262"
+    }
+  ],
+
+  // D1 데이터베이스 설정
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "blog-analysis-db",
+      "database_id": "c352d570-d087-47a1-85bd-5f0652c4b4fb"
+    }
+  ]
 }
