@@ -5,8 +5,18 @@
     "deploy": "wrangler deploy --minify",
     "test": "vitest run",
     "test:watch": "vitest",
-    "db:local": "npx wrangler d1 execute blog-analysis-db --local --file=./migrations/0000_create_blog_analysis.sql",
-    "db": "npx wrangler d1 execute blog-analysis-db --file=./migrations/0000_create_blog_analysis.sql --remote"
+    "db:local": "npx wrangler d1 execute blog-analysis-db --local --file=./migrations/0000_create_blog_analysis.sql --local",
+    "db-delete:local": "npx wrangler d1 execute blog-analysis-db --file=./migrations/drop_tables.sql --local",
+    "db": "npx wrangler d1 execute blog-analysis-db --file=./migrations/0000_create_blog_analysis.sql --remote",
+    "db-delete": "npx wrangler d1 execute blog-analysis-db --file=./migrations/drop_tables.sql --remote",
+    "db:shell": "npx wrangler d1 shell blog-analysis-db --remote",
+    "db:shell:local": "npx wrangler d1 shell blog-analysis-db --local",
+    "db:query": "npx wrangler d1 execute blog-analysis-db --command",
+    "db:query:local": "npx wrangler d1 execute blog-analysis-db --local --command",
+    "db:tables": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT name FROM sqlite_schema WHERE type='table'\" --remote",
+    "db:tables:local": "npx wrangler d1 execute blog-analysis-db --local --command=\"SELECT name FROM sqlite_schema WHERE type='table'\"",
+    "db:rss": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_rss LIMIT 10\" --remote",
+    "db:reports": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_report LIMIT 10\" --remote"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.30",
