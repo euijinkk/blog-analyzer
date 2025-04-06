@@ -95,38 +95,51 @@ export default {
         })
       ),
       async (c) => {
-        const { blogUrl } = c.req.valid("json");
-        const db = c.env.DB;
+        try {
+          const { blogUrl } = c.req.valid("json");
+          const db = c.env.DB;
 
-        // RSS URL을 가져옴
-        const rssUrl = await getRssFromUrl(blogUrl);
+          // RSS URL을 가져옴
+          const rssUrl = await getRssFromUrl(blogUrl);
 
-        // 1. DB에서 기존 분석 결과 확인 (RSS URL 기준)
-        const existingAnalysis = await getLatestAnalysisByRssUrl(db, rssUrl);
-        if (existingAnalysis) {
-          console.log(`기존 분석 결과 반환: ${rssUrl}`);
-          return c.json(existingAnalysis.analysisResult);
+          // 1. DB에서 기존 분석 결과 확인 (RSS URL 기준)
+          const existingAnalysis = await getLatestAnalysisByRssUrl(db, rssUrl);
+          if (existingAnalysis) {
+            console.log(`기존 분석 결과 반환: ${rssUrl}`);
+            return c.json(existingAnalysis.analysisResult);
+          }
+
+          // 2. 기존 결과가 없는 경우 새 분석 수행
+          console.log(`새 분석 시작: ${rssUrl}`);
+          const blogPosts = await getBlogPostsFromRSS(rssUrl);
+          const blogString = parseBlogIntoString({ blogPosts });
+
+          // OpenAI API 호출을 분리된 함수로 대체
+          const analysisResult = await analyzeBlogContent({
+            blogContent: blogString,
+            apiKey: env.OPENAI_API_KEY,
+          });
+
+          // 3. 분석 결과를 DB에 저장 (RSS URL 기준)
+          await saveAnalysisResult(db, {
+            rss_url: rssUrl,
+            blog_url: blogUrl,
+            analysis_result: JSON.stringify(analysisResult),
+          });
+
+          return c.json(analysisResult);
+        } catch (error) {
+          console.error(`블로그 분석 중 오류 발생:`, error);
+
+          // 오류 메시지 추출
+          let errorMessage = "서버 오류가 발생했습니다";
+          if (error instanceof Error) {
+            errorMessage = error.message;
+          }
+
+          // 400 Bad Request 상태코드와 구조화된 오류 메시지 반환
+          return c.body(errorMessage, 400);
         }
-
-        // 2. 기존 결과가 없는 경우 새 분석 수행
-        console.log(`새 분석 시작: ${rssUrl}`);
-        const blogPosts = await getBlogPostsFromRSS(rssUrl);
-        const blogString = parseBlogIntoString({ blogPosts });
-
-        // OpenAI API 호출을 분리된 함수로 대체
-        const analysisResult = await analyzeBlogContent({
-          blogContent: blogString,
-          apiKey: env.OPENAI_API_KEY,
-        });
-
-        // 3. 분석 결과를 DB에 저장 (RSS URL 기준)
-        await saveAnalysisResult(db, {
-          rss_url: rssUrl,
-          blog_url: blogUrl,
-          analysis_result: JSON.stringify(analysisResult),
-        });
-
-        return c.json(analysisResult);
       }
     );
 
