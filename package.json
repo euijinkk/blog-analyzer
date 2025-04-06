@@ -6,7 +6,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:local": "npx wrangler d1 execute blog-analysis-db --local --file=./migrations/0000_create_blog_analysis.sql",
-    "db": "npx wrangler d1 execute blog-analysis-db --file=./migrations/0000_create_blog_analysis.sql"
+    "db": "npx wrangler d1 execute blog-analysis-db --file=./migrations/0000_create_blog_analysis.sql --remote"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.34.30",
