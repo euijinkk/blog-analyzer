@@ -1,7 +1,19 @@
 name = "blog-ai-analyzer"
 main = "src/index.ts"
-compatibility_date = "2023-10-30"
+compatibility_date = "2025-03-10"
 
 # kv_namespaces = [
 #   { binding = "RATE_LIMITS", id = "c0e85c619da54bba8161184dface0262" }
 # ]
+# 
+# [dev]
+# kv_namespaces = [
+#   { binding = "RATE_LIMITS", preview_id = "afc87bc9fcb743909383808e496b3d96" }
+# ]
+
+# Bind a KV Namespace. Use KV as persistent storage for small key-value pairs.
+# Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#kv-namespaces
+[dev]
+[[kv_namespaces]]
+binding = "RATE_LIMITS"
+id = "c09a8524ecf547b8a8b7981583bdd057"

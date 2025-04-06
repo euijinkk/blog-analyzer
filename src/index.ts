@@ -36,10 +36,14 @@ export default {
     app.use("*", cors({ origin: "*" }));
 
     // API 엔드포인트에 IP 요청 제한 적용
-    app.use("/analyze", ipRateLimiter());
 
     app.get("/", (c) => {
       return c.text("Hello Hono!");
+    });
+
+    app.use("/ip-rate", ipRateLimiter());
+    app.get("/ip-rate", (c) => {
+      return c.body("test");
     });
 
     app.get("/parse-blog", async (c) => {
@@ -63,15 +67,12 @@ export default {
         const rssUrl = await getRssFromUrl(blogUrl);
         const blogPosts = await getBlogPostsFromRSS(rssUrl);
         const blogString = parseBlogIntoString({ blogPosts });
-        console.log("blogString", blogString);
 
         // OpenAI API 호출을 분리된 함수로 대체
         const analysisResult = await analyzeBlogContent({
           blogContent: blogString,
           apiKey: env.OPENAI_API_KEY,
         });
-
-        console.log("analysisResult", analysisResult);
 
         return c.json(analysisResult);
       }
