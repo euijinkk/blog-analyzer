@@ -44,9 +44,19 @@ export default {
 
     // CORS 설정 - 개발 및 프로덕션 환경 구분
     const isProd = env.NODE_ENV === "production";
+
     const allowedOrigins = isProd
-      ? ["https://blog-analyzer-frontend.pages.dev"]
-      : ["*"]; // 개발 환경에서는 모든 원본 허용
+      ? ["https://blog-analyzer.pages.dev"]
+      : [
+          "*",
+          "http://localhost:3000",
+          "http://localhost:4000",
+          "http://localhost:5173",
+          "http://localhost:5174",
+          "http://127.0.0.1:5173",
+          "http://127.0.0.1:5174",
+          "https://localhost:3000",
+        ];
 
     app.use(
       "*",
