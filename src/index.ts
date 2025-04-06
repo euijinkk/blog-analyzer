@@ -8,6 +8,8 @@ import { cors } from "hono/cors";
 import { getRssFromUrl } from "./blog-fetcher/getRssFromUrl";
 import { analyzeBlogContent } from "./gen-ai/blog-analysis";
 import { ipRateLimiter } from "./middlewares/ipRateLimiter";
+import { getLatestAnalysisByUrl, saveAnalysisResult } from "./db/blog-analysis";
+import { D1Database } from "@cloudflare/workers-types";
 
 /**
  * TODO:
@@ -18,6 +20,7 @@ import { ipRateLimiter } from "./middlewares/ipRateLimiter";
 interface Env {
   OPENAI_API_KEY: string;
   RATE_LIMITS: KVNamespace;
+  DB: D1Database;
 }
 
 export default {
@@ -67,6 +70,17 @@ export default {
       ),
       async (c) => {
         const { blogUrl } = c.req.valid("json");
+        const db = c.env.DB;
+        
+        // 1. DB에서 기존 분석 결과 확인
+        const existingAnalysis = await getLatestAnalysisByUrl(db, blogUrl);
+        if (existingAnalysis) {
+          console.log(`기존 분석 결과 반환: ${blogUrl}`);
+          return c.json(existingAnalysis.analysisResult);
+        }
+        
+        // 2. 기존 결과가 없는 경우 새 분석 수행
+        console.log(`새 분석 시작: ${blogUrl}`);
         const rssUrl = await getRssFromUrl(blogUrl);
         const blogPosts = await getBlogPostsFromRSS(rssUrl);
         const blogString = parseBlogIntoString({ blogPosts });
@@ -75,6 +89,13 @@ export default {
         const analysisResult = await analyzeBlogContent({
           blogContent: blogString,
           apiKey: env.OPENAI_API_KEY,
+        });
+        
+        // 3. 분석 결과를 DB에 저장
+        await saveAnalysisResult(db, {
+          url: blogUrl,
+          rss_url: rssUrl,
+          analysis_result: JSON.stringify(analysisResult),
         });
 
         return c.json(analysisResult);
