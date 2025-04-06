@@ -1,10 +1,10 @@
 import { D1Database } from "@cloudflare/workers-types";
 
-// 블로그 URL 인터페이스
-export interface BlogUrl {
+// 블로그 RSS 인터페이스
+export interface BlogRss {
   id?: number;
-  url: string;
   rss_url: string;
+  blog_url: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -12,64 +12,64 @@ export interface BlogUrl {
 // 블로그 보고서 인터페이스
 export interface BlogReport {
   id?: number;
-  blog_url_id: number;
+  blog_rss_id: number;
   analysis_result: string;
   created_at?: string;
 }
 
 // API 응답을 위한 통합 인터페이스
 export interface BlogAnalysisResult {
-  blogUrl: string;
   rssUrl: string;
+  blogUrl: string;
   analysisResult: any; // 분석 결과는 JSON으로 파싱되어 반환됨
   createdAt: string;
 }
 
 /**
- * URL로 블로그 정보를 조회하는 함수
+ * RSS URL로 블로그 정보를 조회하는 함수
  */
-export async function getBlogUrlByUrl(db: D1Database, url: string): Promise<BlogUrl | null> {
+export async function getBlogRssByRssUrl(db: D1Database, rssUrl: string): Promise<BlogRss | null> {
   const result = await db
-    .prepare('SELECT * FROM blog_url WHERE url = ?')
-    .bind(url)
-    .first<BlogUrl>();
+    .prepare('SELECT * FROM blog_rss WHERE rss_url = ?')
+    .bind(rssUrl)
+    .first<BlogRss>();
   
   return result || null;
 }
 
 /**
- * 블로그 URL 정보를 저장하거나 업데이트하는 함수
+ * 블로그 RSS 정보를 저장하거나 업데이트하는 함수
  */
-export async function saveBlogUrl(
+export async function saveBlogRss(
   db: D1Database,
-  data: { url: string; rss_url: string }
-): Promise<BlogUrl> {
-  const { url, rss_url } = data;
+  data: { rss_url: string; blog_url: string }
+): Promise<BlogRss> {
+  const { rss_url, blog_url } = data;
   
-  // 기존 블로그 URL이 있는지 확인
-  const existingBlogUrl = await getBlogUrlByUrl(db, url);
+  // 기존 블로그 RSS가 있는지 확인
+  const existingBlogRss = await getBlogRssByRssUrl(db, rss_url);
   
-  if (existingBlogUrl) {
-    // 기존 블로그 URL 업데이트
+  if (existingBlogRss) {
+    // 기존 블로그 RSS 업데이트
     await db
-      .prepare('UPDATE blog_url SET rss_url = ?, updated_at = CURRENT_TIMESTAMP WHERE url = ?')
-      .bind(rss_url, url)
+      .prepare('UPDATE blog_rss SET blog_url = ?, updated_at = CURRENT_TIMESTAMP WHERE rss_url = ?')
+      .bind(blog_url, rss_url)
       .run();
     
     return {
-      ...existingBlogUrl,
-      rss_url,
+      ...existingBlogRss,
+      blog_url,
       updated_at: new Date().toISOString()
     };
   } else {
-    // 새 블로그 URL 생성
+    // 새 블로그 RSS 생성
     const result = await db
-      .prepare('INSERT INTO blog_url (url, rss_url) VALUES (?, ?) RETURNING *')
-      .bind(url, rss_url)
-      .first<BlogUrl>();
+      .prepare('INSERT INTO blog_rss (rss_url, blog_url) VALUES (?, ?) RETURNING *')
+      .bind(rss_url, blog_url)
+      .first<BlogRss>();
     
     if (!result) {
-      throw new Error('블로그 URL 저장에 실패했습니다.');
+      throw new Error('블로그 RSS 저장에 실패했습니다.');
     }
     
     return result;
@@ -77,39 +77,66 @@ export async function saveBlogUrl(
 }
 
 /**
- * 블로그 URL ID로 최신 분석 결과를 조회하는 함수
+ * 블로그 RSS ID로 최신 분석 결과를 조회하는 함수
  */
-export async function getLatestReportByBlogUrlId(db: D1Database, blogUrlId: number): Promise<BlogReport | null> {
+export async function getLatestReportByBlogRssId(db: D1Database, blogRssId: number): Promise<BlogReport | null> {
   const result = await db
-    .prepare('SELECT * FROM blog_report WHERE blog_url_id = ? ORDER BY created_at DESC LIMIT 1')
-    .bind(blogUrlId)
+    .prepare('SELECT * FROM blog_report WHERE blog_rss_id = ? ORDER BY created_at DESC LIMIT 1')
+    .bind(blogRssId)
     .first<BlogReport>();
   
   return result || null;
 }
 
 /**
- * 블로그 URL로 최신 분석 결과를 조회하는 함수
+ * RSS URL로 최신 분석 결과를 조회하는 함수
  */
-export async function getLatestAnalysisByUrl(db: D1Database, url: string): Promise<BlogAnalysisResult | null> {
-  // 조인 쿼리로 블로그 URL과 최신 보고서를 함께 조회
+export async function getLatestAnalysisByRssUrl(db: D1Database, rssUrl: string): Promise<BlogAnalysisResult | null> {
+  // 조인 쿼리로 블로그 RSS와 최신 보고서를 함께 조회
   const result = await db
     .prepare(`
-      SELECT b.url, b.rss_url, r.analysis_result, r.created_at
-      FROM blog_url b
-      JOIN blog_report r ON b.id = r.blog_url_id
-      WHERE b.url = ?
+      SELECT b.rss_url, b.blog_url, r.analysis_result, r.created_at
+      FROM blog_rss b
+      JOIN blog_report r ON b.id = r.blog_rss_id
+      WHERE b.rss_url = ?
       ORDER BY r.created_at DESC
       LIMIT 1
     `)
-    .bind(url)
-    .first<{ url: string, rss_url: string, analysis_result: string, created_at: string }>();
+    .bind(rssUrl)
+    .first<{ rss_url: string, blog_url: string, analysis_result: string, created_at: string }>();
   
   if (!result) return null;
   
   return {
-    blogUrl: result.url,
     rssUrl: result.rss_url,
+    blogUrl: result.blog_url,
+    analysisResult: JSON.parse(result.analysis_result),
+    createdAt: result.created_at
+  };
+}
+
+/**
+ * 블로그 URL로 최신 분석 결과를 조회하는 함수
+ */
+export async function getLatestAnalysisByUrl(db: D1Database, blogUrl: string): Promise<BlogAnalysisResult | null> {
+  // 조인 쿼리로 블로그 RSS와 최신 보고서를 함께 조회
+  const result = await db
+    .prepare(`
+      SELECT b.rss_url, b.blog_url, r.analysis_result, r.created_at
+      FROM blog_rss b
+      JOIN blog_report r ON b.id = r.blog_rss_id
+      WHERE b.blog_url = ?
+      ORDER BY r.created_at DESC
+      LIMIT 1
+    `)
+    .bind(blogUrl)
+    .first<{ rss_url: string, blog_url: string, analysis_result: string, created_at: string }>();
+  
+  if (!result) return null;
+  
+  return {
+    rssUrl: result.rss_url,
+    blogUrl: result.blog_url,
     analysisResult: JSON.parse(result.analysis_result),
     createdAt: result.created_at
   };
@@ -120,21 +147,21 @@ export async function getLatestAnalysisByUrl(db: D1Database, url: string): Promi
  */
 export async function saveAnalysisResult(
   db: D1Database, 
-  data: { url: string; rss_url: string; analysis_result: string }
+  data: { rss_url: string; blog_url: string; analysis_result: string }
 ): Promise<BlogAnalysisResult> {
-  const { url, rss_url, analysis_result } = data;
+  const { rss_url, blog_url, analysis_result } = data;
   
-  // 1. 블로그 URL 저장 또는 업데이트
-  const blogUrl = await saveBlogUrl(db, { url, rss_url });
+  // 1. 블로그 RSS 저장 또는 업데이트
+  const blogRss = await saveBlogRss(db, { rss_url, blog_url });
   
-  if (!blogUrl.id) {
-    throw new Error('블로그 URL ID를 가져올 수 없습니다.');
+  if (!blogRss.id) {
+    throw new Error('블로그 RSS ID를 가져올 수 없습니다.');
   }
   
   // 2. 블로그 분석 보고서 저장
   const reportResult = await db
-    .prepare('INSERT INTO blog_report (blog_url_id, analysis_result) VALUES (?, ?) RETURNING *')
-    .bind(blogUrl.id, analysis_result)
+    .prepare('INSERT INTO blog_report (blog_rss_id, analysis_result) VALUES (?, ?) RETURNING *')
+    .bind(blogRss.id, analysis_result)
     .first<BlogReport>();
   
   if (!reportResult) {
@@ -143,8 +170,8 @@ export async function saveAnalysisResult(
   
   // 3. 통합 결과 반환
   return {
-    blogUrl: url,
     rssUrl: rss_url,
+    blogUrl: blog_url,
     analysisResult: JSON.parse(analysis_result),
     createdAt: reportResult.created_at || new Date().toISOString()
   };

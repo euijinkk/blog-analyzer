@@ -1,29 +1,38 @@
-import ky from 'ky';
+import ky from "ky";
 
 /**
  * HTML 페이지에서 RSS 피드 URL을 추출
  */
-export async function extractRssUrlFromHtml(url: string): Promise<string | null> {
+export async function extractRssUrlFromHtml(
+  url: string
+): Promise<string | null> {
   try {
     // 웹 페이지 가져오기
     const response = await ky.get(url).text();
-    
+
     // RSS 피드 링크 패턴 찾기
     // 1. <link rel="alternate" type="application/rss+xml" href="..."> 형식
-    const rssLinkMatch = response.match(/<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/rss\+xml["\'][^>]*href=["\']([^"\'>]+)["\']/i) || 
-                         response.match(/<link[^>]*type=["\']application\/rss\+xml["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i) ||
-                         response.match(/<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/rss\+xml["\']/i);
-    
+    const rssLinkMatch =
+      response.match(
+        /<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/rss\+xml["\'][^>]*href=["\']([^"\'>]+)["\']/i
+      ) ||
+      response.match(
+        /<link[^>]*type=["\']application\/rss\+xml["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i
+      ) ||
+      response.match(
+        /<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/rss\+xml["\']/i
+      );
+
     if (rssLinkMatch && rssLinkMatch[1]) {
       // 상대 URL을 절대 URL로 변환
       const rssUrl = new URL(rssLinkMatch[1], url).href;
       return rssUrl;
     }
-    
+
     // 2. 원하는 RSS 링크를 찾지 못한 경우
     return null;
   } catch (error) {
-    console.error('웹 페이지에서 RSS URL 추출 실패:', error);
+    console.error("웹 페이지에서 RSS URL 추출 실패:", error);
     return null;
   }
 }
@@ -106,15 +115,17 @@ const mediumPlatform: BlogPlatform = {
     if (rssUrl) {
       return rssUrl;
     }
-    
+
     // HTML에서 찾지 못했다면, 추측된 URL 사용
     // Medium 형식: https://medium.com/feed/@username
     const username = parsedUrl.pathname.match(/^\/@([^/]+)/);
     if (username && username[1]) {
       return `https://medium.com/feed/@${username[1]}`;
     }
-    
-    throw new Error(`유효하지 않은 ${mediumPlatform.name} URL 형식입니다. 예시: https://${mediumPlatform.exampleUrl}`);
+
+    throw new Error(
+      `유효하지 않은 ${mediumPlatform.name} URL 형식입니다. 예시: https://${mediumPlatform.exampleUrl}`
+    );
   },
   exampleUrl: "medium.com/@username",
 };
@@ -131,15 +142,17 @@ const brunchPlatform: BlogPlatform = {
     if (rssUrl) {
       return rssUrl;
     }
-    
+
     // HTML에서 찾지 못했다면, 표준 형식 사용
     // Brunch 형식: https://brunch.co.kr/rss/@@username
-    const username = parsedUrl.pathname.split('/').filter(Boolean)[0];
+    const username = parsedUrl.pathname.split("/").filter(Boolean)[0];
     if (username) {
       return `https://brunch.co.kr/rss/@${username}`;
     }
-    
-    throw new Error(`유효하지 않은 ${brunchPlatform.name} URL 형식입니다. 예시: https://${brunchPlatform.exampleUrl}`);
+
+    throw new Error(
+      `유효하지 않은 ${brunchPlatform.name} URL 형식입니다. 예시: https://${brunchPlatform.exampleUrl}`
+    );
   },
   exampleUrl: "brunch.co.kr/@username",
 };
@@ -156,9 +169,11 @@ const genericPlatform: BlogPlatform = {
     if (rssUrl) {
       return rssUrl;
     }
-    
+
     // RSS URL을 찾지 못했으면 오류 발생
-    throw new Error(`${parsedUrl.hostname}에서 RSS 피드 URL을 찾을 수 없습니다.`);
+    throw new Error(
+      `${parsedUrl.hostname}에서 RSS 피드 URL을 찾을 수 없습니다.`
+    );
   },
   exampleUrl: "example.com",
 };
@@ -192,10 +207,10 @@ function parseAndValidateUrl(url: string): URL {
 function isRssUrl(url: string): boolean {
   // URL에 'rss' 포함 또는 '.xml'로 끝나는지 확인
   return (
-    url.toLowerCase().includes('/rss') ||
-    url.toLowerCase().includes('/feed') ||
-    url.toLowerCase().includes('rss.') ||
-    url.toLowerCase().endsWith('.xml')
+    url.toLowerCase().includes("/rss") ||
+    url.toLowerCase().includes("/feed") ||
+    url.toLowerCase().includes("rss.") ||
+    url.toLowerCase().endsWith(".xml")
   );
 }
 
@@ -208,15 +223,13 @@ function findSupportedPlatform(hostname: string): BlogPlatform | null {
   );
 }
 
-
-
 export async function getRssFromUrl(url: string): Promise<string> {
   try {
     // 이미 RSS URL인 경우 그대로 반환
     if (isRssUrl(url)) {
       return url;
     }
-    
+
     // 원래 URL이 HTML이면 헨더에서 추출 시도
     const rssUrl = await extractRssUrlFromHtml(url);
     if (rssUrl) {
