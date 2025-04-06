@@ -8,7 +8,11 @@ import { cors } from "hono/cors";
 import { getRssFromUrl } from "./blog-fetcher/getRssFromUrl";
 import { analyzeBlogContent } from "./gen-ai/blog-analysis";
 import { ipRateLimiter } from "./middlewares/ipRateLimiter";
-import { getLatestAnalysisByRssUrl, getLatestAnalysisByUrl, saveAnalysisResult } from "./db/blog-analysis";
+import {
+  getLatestAnalysisByRssUrl,
+  getLatestAnalysisByUrl,
+  saveAnalysisResult,
+} from "./db/blog-analysis";
 import { D1Database } from "@cloudflare/workers-types";
 
 /**
@@ -21,6 +25,7 @@ interface Env {
   OPENAI_API_KEY: string;
   RATE_LIMITS: KVNamespace;
   DB: D1Database;
+  NODE_ENV?: string; // 개발 및 프로덕션 환경 구분을 위한 환경 변수
 }
 
 export default {
@@ -37,8 +42,19 @@ export default {
       apiKey: env.OPENAI_API_KEY,
     });
 
-    // CORS 설정
-    app.use("*", cors({ origin: "*" }));
+    // CORS 설정 - 개발 및 프로덕션 환경 구분
+    const isProd = env.NODE_ENV === "production";
+    const allowedOrigins = isProd
+      ? ["https://blog-analyzer-frontend.pages.dev"]
+      : ["*"]; // 개발 환경에서는 모든 원본 허용
+
+    app.use(
+      "*",
+      cors({
+        origin: allowedOrigins,
+        allowMethods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+      })
+    );
 
     // API 엔드포인트에 IP 요청 제한 적용
     app.use("/analyze", ipRateLimiter());
@@ -71,17 +87,17 @@ export default {
       async (c) => {
         const { blogUrl } = c.req.valid("json");
         const db = c.env.DB;
-        
+
         // RSS URL을 가져옴
         const rssUrl = await getRssFromUrl(blogUrl);
-        
+
         // 1. DB에서 기존 분석 결과 확인 (RSS URL 기준)
         const existingAnalysis = await getLatestAnalysisByRssUrl(db, rssUrl);
         if (existingAnalysis) {
           console.log(`기존 분석 결과 반환: ${rssUrl}`);
           return c.json(existingAnalysis.analysisResult);
         }
-        
+
         // 2. 기존 결과가 없는 경우 새 분석 수행
         console.log(`새 분석 시작: ${rssUrl}`);
         const blogPosts = await getBlogPostsFromRSS(rssUrl);
@@ -92,7 +108,7 @@ export default {
           blogContent: blogString,
           apiKey: env.OPENAI_API_KEY,
         });
-        
+
         // 3. 분석 결과를 DB에 저장 (RSS URL 기준)
         await saveAnalysisResult(db, {
           rss_url: rssUrl,

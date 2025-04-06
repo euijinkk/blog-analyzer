@@ -27,5 +27,10 @@
       "database_name": "blog-analysis-db",
       "database_id": "c352d570-d087-47a1-85bd-5f0652c4b4fb"
     }
-  ]
+  ],
+
+  // 환경 변수 설정
+  "vars": {
+    "NODE_ENV": "production"
+  }
 }
