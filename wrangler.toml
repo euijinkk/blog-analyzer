@@ -2,9 +2,12 @@ name = "blog-ai-analyzer"
 main = "src/index.ts"
 compatibility_date = "2025-03-10"
 
-# kv_namespaces = [
-#   { binding = "RATE_LIMITS", id = "c0e85c619da54bba8161184dface0262" }
-# ]
+[observability]
+enabled = true
+
+kv_namespaces = [
+  { binding = "RATE_LIMITS", id = "afc87bc9fcb743909383808e496b3d96" }
+]
 # 
 # [dev]
 # kv_namespaces = [
@@ -16,4 +19,4 @@ compatibility_date = "2025-03-10"
 [dev]
 [[kv_namespaces]]
 binding = "RATE_LIMITS"
-id = "c09a8524ecf547b8a8b7981583bdd057"
+id = "afc87bc9fcb743909383808e496b3d96"
