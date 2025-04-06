@@ -54,7 +54,6 @@ export async function analyzeBlogContent(
 
     return JSON.parse(resultContent);
   } catch (error) {
-    console.error("블로그 분석 중 오류 발생:", error);
-    throw new Error("블로그 분석에 실패했습니다");
+    throw new Error("블로그 분석에 실패했습니다.");
   }
 }

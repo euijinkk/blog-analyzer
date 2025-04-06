@@ -11,7 +11,7 @@
     "db-delete": "npx wrangler d1 execute blog-analysis-db --file=./migrations/drop_tables.sql --remote",
     "db:shell": "npx wrangler d1 shell blog-analysis-db --remote",
     "db:shell:local": "npx wrangler d1 shell blog-analysis-db --local",
-    "db:query": "npx wrangler d1 execute blog-analysis-db --command",
+    "db:query": "npx wrangler d1 execute blog-analysis-db --remote --command",
     "db:query:local": "npx wrangler d1 execute blog-analysis-db --local --command",
     "db:tables": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT name FROM sqlite_schema WHERE type='table'\" --remote",
     "db:tables:local": "npx wrangler d1 execute blog-analysis-db --local --command=\"SELECT name FROM sqlite_schema WHERE type='table'\"",

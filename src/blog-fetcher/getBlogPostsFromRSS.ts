@@ -79,13 +79,9 @@ export const getBlogPostsFromRSS = async (
   } catch (error: unknown) {
     // 사용자에게 보여줄 더 친절한 오류 메시지
     if (error instanceof Error) {
-      throw new Error(
-        `블로그 포스트를 가져오는 데 실패했습니다: ${error.message}`
-      );
+      throw new Error(`해당 블로그는 RSS 를 제대로 제공하지 않습니다.`);
     }
 
-    throw new Error(
-      "블로그 포스트를 가져오는 중 알 수 없는 오류가 발생했습니다."
-    );
+    throw new Error("해당 블로그는 RSS 를 제대로 제공하지 않습니다.");
   }
 };

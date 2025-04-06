@@ -251,8 +251,8 @@ export async function getRssFromUrl(url: string): Promise<string> {
   } catch (error) {
     // 에러 그대로 다시 던지기
     if (error instanceof Error) {
-      throw error;
+      throw new Error(`해당 블로그는 RSS 를 제대로 제공하지 않습니다.`);
     }
-    throw new Error(`잘못된 URL입니다: ${url}`);
+    throw new Error(`해당 블로그는 RSS 를 제대로 제공하지 않습니다.`);
   }
 }
