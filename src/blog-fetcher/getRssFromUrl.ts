@@ -33,7 +33,7 @@ export async function extractRssUrlFromHtml(
     return null;
   } catch (error) {
     console.error("웹 페이지에서 RSS URL 추출 실패:", error);
-    return null;
+    throw error;
   }
 }
 
