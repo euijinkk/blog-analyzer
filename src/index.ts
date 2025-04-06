@@ -7,6 +7,7 @@ import { z } from "zod";
 import { cors } from "hono/cors";
 import { getRssFromUrl } from "./blog-fetcher/getRssFromUrl";
 import { analyzeBlogContent } from "./gen-ai/blog-analysis";
+import { ipRateLimiter } from "./middlewares/ipRateLimiter";
 
 /**
  * TODO:
@@ -16,6 +17,7 @@ import { analyzeBlogContent } from "./gen-ai/blog-analysis";
 
 interface Env {
   OPENAI_API_KEY: string;
+  RATE_LIMITS: KVNamespace;
 }
 
 export default {
@@ -30,8 +32,11 @@ export default {
       apiKey: env.OPENAI_API_KEY,
     });
 
-    // origin
+    // CORS 설정
     app.use("*", cors({ origin: "*" }));
+
+    // API 엔드포인트에 IP 요청 제한 적용
+    app.use("/analyze", ipRateLimiter());
 
     app.get("/", (c) => {
       return c.text("Hello Hono!");
@@ -68,7 +73,7 @@ export default {
 
         console.log("analysisResult", analysisResult);
 
-        return c.body(analysisResult);
+        return c.json(analysisResult);
       }
     );
 

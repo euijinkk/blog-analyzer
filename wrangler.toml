@@ -1,0 +1,7 @@
+name = "blog-ai-analyzer"
+main = "src/index.ts"
+compatibility_date = "2023-10-30"
+
+# kv_namespaces = [
+#   { binding = "RATE_LIMITS", id = "c0e85c619da54bba8161184dface0262" }
+# ]

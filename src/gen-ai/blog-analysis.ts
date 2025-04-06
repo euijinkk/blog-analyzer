@@ -23,11 +23,11 @@ type BlogAnalysisParams = {
 /**
  * 블로그 내용을 분석하여 인사이트를 추출합니다
  * @param params 분석 파라미터 객체
- * @returns 블로그 분석 결과 JSON
+ * @returns 블로그 분석 결과 객체
  */
 export async function analyzeBlogContent(
   params: BlogAnalysisParams
-): Promise<string> {
+): Promise<Record<string, any>> {
   try {
     const { blogContent, apiKey } = params;
     const client = createOpenAIClient(apiKey);
@@ -50,7 +50,9 @@ export async function analyzeBlogContent(
       },
     });
 
-    return completion.choices[0].message.content ?? "";
+    const resultContent = completion.choices[0].message.content ?? "";
+
+    return JSON.parse(resultContent);
   } catch (error) {
     console.error("블로그 분석 중 오류 발생:", error);
     throw new Error("블로그 분석에 실패했습니다");
