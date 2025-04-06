@@ -38,6 +38,7 @@ export default {
     app.use("*", cors({ origin: "*" }));
 
     // API 엔드포인트에 IP 요청 제한 적용
+    app.use("/analyze", ipRateLimiter());
 
     app.get("/", (c) => {
       return c.text("Hello Hono!");
