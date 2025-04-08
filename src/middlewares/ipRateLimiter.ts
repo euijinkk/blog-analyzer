@@ -137,12 +137,9 @@ export const ipRateLimiter = (): MiddlewareHandler<{
   Bindings: Env;
 }> => {
   return async (c: Context<{ Bindings: Env }>, next: Next) => {
-    console.log("c", c);
     try {
       // 클라이언트 IP 주소 가져오기
       const clientIp = getClientIp(c);
-
-      console.log("clientIp", clientIp);
 
       if (clientIp === "unknown") {
         return c.json({ error: "Could not determine client IP" }, 400);
@@ -151,12 +148,8 @@ export const ipRateLimiter = (): MiddlewareHandler<{
       // KV 저장소 키 생성
       const key = getRateLimitKey(clientIp);
 
-      console.log("key", key);
-
       // 요청 제한 정보 조회 및 업데이트
       const rateLimitInfo = await updateRateLimitInfo(c, key);
-
-      console.log("rateLimitInfo", rateLimitInfo);
 
       // 응답 헤더 설정
       setRateLimitHeaders(c, rateLimitInfo);

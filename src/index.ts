@@ -36,8 +36,6 @@ export default {
   ): Promise<Response> {
     const app = new Hono<{ Bindings: Env }>();
 
-    console.log("env", env);
-    console.log("ctx", ctx);
     const client: OpenAI = new OpenAI({
       apiKey: env.OPENAI_API_KEY,
     });
