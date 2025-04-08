@@ -2,7 +2,7 @@
   "name": "blog-ai-analyzer",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
+    "deploy": "wrangler deploy --minify && npm run sentry:sourcemaps",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:local": "npx wrangler d1 execute blog-analysis-db --local --file=./migrations/0000_create_blog_analysis.sql --local",
@@ -16,9 +16,11 @@
     "db:tables": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT name FROM sqlite_schema WHERE type='table'\" --remote",
     "db:tables:local": "npx wrangler d1 execute blog-analysis-db --local --command=\"SELECT name FROM sqlite_schema WHERE type='table'\"",
     "db:rss": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_rss LIMIT 10\" --remote",
-    "db:reports": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_report LIMIT 10\" --remote"
+    "db:reports": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_report LIMIT 10\" --remote",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org euijin --project node-cloudflare-workers ./.wrangler/tmp && sentry-cli sourcemaps upload --org euijin --project node-cloudflare-workers ./.wrangler/tmp"
   },
   "dependencies": {
+    "@sentry/cli": "^2.43.0",
     "@sentry/cloudflare": "^9.12.0",
     "@sinclair/typebox": "^0.34.30",
     "cheerio": "^1.0.0",
