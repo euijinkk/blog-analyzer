@@ -33,6 +33,7 @@ interface Env {
 export default Sentry.withSentry(
   (env) => ({
     dsn: "https://7776e15d89cc7d29a34e1d6b09e7415c@o4507096805015552.ingest.us.sentry.io/4509118221254656",
+    release: "blog-ai-analyzer@1.0.0", // 릴리스 식별자 추가
     tracesSampleRate: 1.0,
   }),
   {
