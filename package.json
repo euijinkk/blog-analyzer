@@ -9,7 +9,6 @@
     "db-delete:local": "npx wrangler d1 execute blog-analysis-db --file=./migrations/drop_tables.sql --local",
     "db": "npx wrangler d1 execute blog-analysis-db --file=./migrations/0000_create_blog_analysis.sql --remote",
     "db-truncate:local": "npx wrangler d1 execute blog-analysis-db --file=./migrations/truncate_tables.sql --local",
-    "db-truncate": "npx wrangler d1 execute blog-analysis-db --file=./migrations/truncate_tables.sql --remote",
     "db:shell": "npx wrangler d1 shell blog-analysis-db --remote",
     "db:shell:local": "npx wrangler d1 shell blog-analysis-db --local",
     "db:query": "npx wrangler d1 execute blog-analysis-db --remote --command",
