@@ -85,6 +85,7 @@ export default Sentry.withSentry(
       });
 
       app.get("/sentry-error", (c) => {
+        Sentry.captureException("Error test");
         throw new Error("sentry test");
       });
 
