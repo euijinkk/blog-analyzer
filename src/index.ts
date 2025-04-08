@@ -35,6 +35,7 @@ export default Sentry.withSentry(
     dsn: "https://7776e15d89cc7d29a34e1d6b09e7415c@o4507096805015552.ingest.us.sentry.io/4509118221254656",
     release: "blog-ai-analyzer@1.0.0", // 릴리스 식별자 추가
     tracesSampleRate: 1.0,
+    attachStacktrace: true,
   }),
   {
     async fetch(
@@ -85,9 +86,14 @@ export default Sentry.withSentry(
         return c.text("Hello Hono!");
       });
 
-      app.get("/sentry-error", (c) => {
-        Sentry.captureException("Error test");
-        throw new Error("sentry test");
+      app.get("/sentry-error", async (c) => {
+        try {
+          await getRssFromUrl("https://test.com");
+          return c.text("성공 (이 메시지는 보이지 않을 것입니다)");
+        } catch (e) {
+          // 에러를 캡처한 후 다시 던져서 스택 트레이스를 완전하게 유지
+          Sentry.captureException(e);
+        }
       });
 
       app.use("/ip-rate", ipRateLimiter());
