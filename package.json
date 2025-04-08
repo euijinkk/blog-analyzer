@@ -19,6 +19,7 @@
     "db:reports": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_report LIMIT 10\" --remote"
   },
   "dependencies": {
+    "@sentry/cloudflare": "^9.12.0",
     "@sinclair/typebox": "^0.34.30",
     "cheerio": "^1.0.0",
     "fast-xml-parser": "^5.0.9",
