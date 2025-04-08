@@ -10,7 +10,7 @@ const MBTIExplanation = Type.Object({
 const Quote = Type.Object({
   quote: Type.String(),
   quote_explanation: Type.String(),
-  source_link: Type.String({ format: "" }),
+  source_link: Type.String({ format: "uri" }),
 });
 
 const ContentRatio = Type.Object({
