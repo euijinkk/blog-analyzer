@@ -85,10 +85,7 @@ export default Sentry.withSentry(
       });
 
       app.get("/sentry-error", (c) => {
-        setTimeout(() => {
-          throw new Error("sentry test");
-        });
-        return c.text("Hello Hono!");
+        throw new Error("sentry test");
       });
 
       app.use("/ip-rate", ipRateLimiter());
