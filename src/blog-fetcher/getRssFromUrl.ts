@@ -60,25 +60,59 @@ const tistoryPlatform: BlogPlatform = {
 };
 
 /**
- * 네이버 블로그 플랫폼
+ * 네이버 블로그 데스크톱 플랫폼
  */
-const naverPlatform: BlogPlatform = {
-  name: "네이버 블로그",
+const naverDesktopPlatform: BlogPlatform = {
+  name: "네이버 블로그 (데스크톱)",
   check: (hostname) => hostname === "blog.naver.com",
   extractUsername: (parsedUrl) => {
     const match = parsedUrl.pathname.match(/^\/([^/]+)/);
     return match ? match[1] : null;
   },
   generateRssUrl: (parsedUrl) => {
-    const username = naverPlatform.extractUsername?.(parsedUrl);
+    const username = naverDesktopPlatform.extractUsername?.(parsedUrl);
     if (!username) {
       throw new Error(
-        `유효하지 않은 ${naverPlatform.name} URL 형식입니다. 예시: https://${naverPlatform.exampleUrl}`
+        `유효하지 않은 ${naverDesktopPlatform.name} URL 형식입니다. 예시: https://${naverDesktopPlatform.exampleUrl}`
       );
     }
     return `https://rss.blog.naver.com/${username}.xml`;
   },
   exampleUrl: "blog.naver.com/username",
+};
+
+/**
+ * 네이버 블로그 모바일 플랫폼
+ */
+const naverMobilePlatform: BlogPlatform = {
+  name: "네이버 블로그 (모바일)",
+  check: (hostname) => hostname === "m.blog.naver.com",
+  extractUsername: (parsedUrl) => {
+    // 1. 쿼리 파라미터에서 blogId 추출: ?blogId=gytks4
+    const urlParams = new URLSearchParams(parsedUrl.search);
+    const blogId = urlParams.get("blogId");
+    if (blogId) {
+      return blogId;
+    }
+
+    // 2. 경로에서 사용자명 추출: /gytks4
+    const pathMatch = parsedUrl.pathname.match(/^\/([^/]+)$/);
+    if (pathMatch && pathMatch[1] != null) {
+      return pathMatch[1];
+    }
+
+    return null;
+  },
+  generateRssUrl: (parsedUrl) => {
+    const username = naverMobilePlatform.extractUsername?.(parsedUrl);
+    if (!username) {
+      throw new Error(
+        `유효하지 않은 ${naverMobilePlatform.name} URL 형식입니다. 예시: https://${naverMobilePlatform.exampleUrl}`
+      );
+    }
+    return `https://rss.blog.naver.com/${username}.xml`;
+  },
+  exampleUrl: "m.blog.naver.com/username",
 };
 
 /**
@@ -183,7 +217,8 @@ const genericPlatform: BlogPlatform = {
  */
 const supportedPlatforms: BlogPlatform[] = [
   tistoryPlatform,
-  naverPlatform,
+  naverDesktopPlatform,
+  naverMobilePlatform,
   velogPlatform,
   mediumPlatform,
   brunchPlatform,
@@ -238,6 +273,8 @@ export async function getRssFromUrl(url: string): Promise<string> {
 
     const parsedUrl = parseAndValidateUrl(url);
     const { hostname } = parsedUrl;
+
+    console.log("hostname", hostname);
 
     // 지원하는 플랫폼 여부 확인
     const platform = findSupportedPlatform(hostname);
