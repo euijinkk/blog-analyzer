@@ -1,0 +1,316 @@
+prompts: [./prompt.js]
+
+providers:
+  - id: openai:gpt-4o-mini
+    config:
+      response_format:
+        type: json_schema
+        json_schema:
+          name: output
+          description: 분석 리포트 결과
+          schema:
+            type: object
+            properties:
+              summary:
+                type: string
+              summary_explanation:
+                type: string
+              mbti:
+                type: string
+                enum:
+                  - ISTJ
+                  - ISFJ
+                  - INFJ
+                  - INTJ
+                  - ISTP
+                  - ISFP
+                  - INFP
+                  - INTP
+                  - ESTP
+                  - ESFP
+                  - ENFP
+                  - ENTP
+                  - ESTJ
+                  - ESFJ
+                  - ENFJ
+                  - ENTJ
+              mbti_explanation:
+                type: object
+                properties:
+                  E/I:
+                    type: string
+                  S/N:
+                    type: string
+                  T/F:
+                    type: string
+                  J/P:
+                    type: string
+                required: [E/I, S/N, T/F, J/P]
+              keywords:
+                type: array
+                items:
+                  type: string
+              quotes:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    quote:
+                      type: string
+                    quote_explanation:
+                      type: string
+                    source_link:
+                      type: string
+                      format: uri
+                  required: [quote, quote_explanation, source_link]
+              content_ratio:
+                type: object
+                properties:
+                  expertise:
+                    type: string
+                    pattern: "^(\\d{1,2}|100)%$"
+                  essay:
+                    type: string
+                    pattern: "^(\\d{1,2}|100)%$"
+                  travel:
+                    type: string
+                    pattern: "^(\\d{1,2}|100)%$"
+                  self_improvement:
+                    type: string
+                    pattern: "^(\\d{1,2}|100)%$"
+                required: [expertise, essay, travel, self_improvement]
+            required:
+              - summary
+              - summary_explanation
+              - mbti
+              - mbti_explanation
+              - keywords
+              - quotes
+              - content_ratio
+
+tests:
+  - vars: {}
+    assert:
+      # 1. JSON 구조 검증 (contains-json으로 대체)
+      - type: contains-json
+
+      # 2. 각 필드의 값이 비어있지 않은지
+      - type: javascript
+        value: |
+          function validateRequiredFields(output, context) {
+            try {
+              const obj = output;
+              const requiredFields = [
+                'summary',
+                'summary_explanation',
+                'mbti',
+                'mbti_explanation',
+                'keywords',
+                'quotes',
+                'quote_explanation',
+                'source_link',
+                'content_ratio'
+              ];
+              const isValid = requiredFields.every(field => 
+                obj[field] && 
+                (!Array.isArray(obj[field]) || obj[field].length > 0) && 
+                (typeof obj[field] !== 'string' || obj[field].trim() !== '')
+              );
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'All required fields are present' : 'Missing or empty required fields'
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateRequiredFields(output, context);
+
+      # 3. quotes가 2개 이상인지
+      - type: javascript
+        value: |
+          function validateQuotes(output, context) {
+            try {
+              const obj = output;
+              const isValid = Array.isArray(obj.quotes) && obj.quotes.length >= 2;
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'Quotes count is valid' : 'Quotes count is less than 2'
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateQuotes(output, context);
+
+      # 4. content_ratio의 합이 100인지
+      - type: javascript
+        value: |
+          function validateContentRatioSum(output, context) {
+            try {
+              const obj = output;
+              if (!obj.content_ratio || typeof obj.content_ratio !== 'object') {
+                return {
+                  pass: false,
+                  score: 0,
+                  reason: 'content_ratio is missing or not an object'
+                };
+              }
+              const sum = Object.values(obj.content_ratio).reduce((acc, v) => acc + (typeof v === 'number' ? v : 0), 0);
+              const isValid = sum === 100;
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'Content ratio sum is 100' : `Content ratio sum is ${sum}, expected 100`
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateContentRatioSum(output, context);
+
+      # 5. mbti 값이 4글자(영문 대문자)이며 각 자리가 E/I, S/N, T/F, J/P 중 하나인지
+      - type: javascript
+        value: |
+          function validateMBTI(output, context) {
+            try {
+              const obj = output;
+              const isValid = typeof obj.mbti === 'string' && /^[EI][SN][TF][JP]$/.test(obj.mbti);
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'MBTI format is valid' : 'Invalid MBTI format'
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateMBTI(output, context);
+
+      # 6. quotes의 각 문장이 실제 user prompt(원문)에 존재하는지
+      - type: javascript
+        value: |
+          function validateQuotesInPrompt(output, context) {
+            try {
+              const obj = output;
+              if (!Array.isArray(obj.quotes)) {
+                return {
+                  pass: false,
+                  score: 0,
+                  reason: 'quotes is not an array'
+                };
+              }
+              if (!context.vars || !context.vars.user_prompt) {
+                return {
+                  pass: false,
+                  score: 0,
+                  reason: 'user_prompt is missing in context'
+                };
+              }
+              const isValid = obj.quotes.every(q => typeof q === 'string' && context.vars.user_prompt.includes(q));
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'All quotes exist in prompt' : 'Some quotes do not exist in prompt'
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateQuotesInPrompt(output, context);
+
+      # 7. quotes가 서로 다른 source_link를 갖는지
+      - type: javascript
+        value: |
+          function validateUniqueSourceLinks(output, context) {
+            try {
+              const obj = output;
+              if (!Array.isArray(obj.quotes)) {
+                return {
+                  pass: false,
+                  score: 0,
+                  reason: 'quotes is not an array'
+                };
+              }
+              // quotes 배열의 각 항목에 source_link가 있는지 확인
+              const allHaveSourceLink = obj.quotes.every(q => q && typeof q.source_link === 'string' && q.source_link.length > 0);
+              if (!allHaveSourceLink) {
+                return {
+                  pass: false,
+                  score: 0,
+                  reason: 'At least one quote is missing source_link'
+                };
+              }
+              // source_link의 유일성 확인
+              const links = obj.quotes.map(q => q.source_link);
+              const isValid = new Set(links).size === links.length;
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'All source links are unique' : 'Duplicate source links found'
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateUniqueSourceLinks(output, context);
+
+      # 8. content_ratio의 각 key가 4개(전문분야, 에세이, 여행, 자기계발)이며 값이 0~100의 % 문자열인지
+      - type: javascript
+        value: |
+          function validateContentRatio(output, context) {
+            try {
+              const obj = output;
+              const keys = ['expertise', 'essay', 'travel', 'self_improvement'];
+              if (!obj.content_ratio || typeof obj.content_ratio !== 'object') {
+                return {
+                  pass: false,
+                  score: 0,
+                  reason: 'content_ratio is missing or not an object'
+                };
+              }
+              const isValid = keys.every(k => {
+                const value = obj.content_ratio[k];
+                // "0%" ~ "100%" 형식의 문자열인지 체크
+                return typeof value === 'string' && /^([0-9]{1,2}|100)%$/.test(value);
+              });
+              return {
+                pass: isValid,
+                score: isValid ? 1 : 0,
+                reason: isValid ? 'All content ratios are valid' : 'Invalid content ratio values'
+              };
+            } catch (error) {
+              return {
+                pass: false,
+                score: 0,
+                reason: `Error: ${error.message}`
+              };
+            }
+          }
+          return validateContentRatio(output, context);
