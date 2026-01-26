@@ -25,6 +25,7 @@ import * as Sentry from "@sentry/cloudflare";
 
 interface Env {
   OPENAI_API_KEY: string;
+  GEMINI_API_KEY: string;
   RATE_LIMITS: KVNamespace;
   DB: D1Database;
   NODE_ENV?: string; // 개발 및 프로덕션 환경 구분을 위한 환경 변수
@@ -142,10 +143,10 @@ export default Sentry.withSentry(
             const blogPosts = await getBlogPostsFromRSS(rssUrl);
             const blogString = parseBlogIntoString({ blogPosts });
 
-            // OpenAI API 호출을 분리된 함수로 대체
+            // Gemini API 호출을 분리된 함수로 대체
             const analysisResult = await analyzeBlogContent({
               blogContent: blogString,
-              apiKey: env.OPENAI_API_KEY,
+              apiKey: env.GEMINI_API_KEY,
             });
 
             // 3. 분석 결과를 DB에 저장 (RSS URL 기준)

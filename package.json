@@ -22,6 +22,7 @@
     "sentry:upload": "sentry-cli sourcemaps upload --org euijin --project node-cloudflare-workers --release blog-ai-analyzer@1.0.0 ./dist"
   },
   "dependencies": {
+    "@google/genai": "^1.38.0",
     "@sentry/cli": "^2.43.0",
     "@sentry/cloudflare": "^9.12.0",
     "@sinclair/typebox": "^0.34.30",

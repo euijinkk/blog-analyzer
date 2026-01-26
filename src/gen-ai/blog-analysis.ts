@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { BlogAnalysisSchema } from "./schema";
 import { commonPrompt } from "./common-prompt";
+import { GoogleGenAI } from "@google/genai";
 
 /**
  * OpenAI 클라이언트를 생성합니다.
@@ -25,7 +26,7 @@ type BlogAnalysisParams = {
  * @param params 분석 파라미터 객체
  * @returns 블로그 분석 결과 객체
  */
-export async function analyzeBlogContent(
+export async function analyzeBlogContentWithOpenAI(
   params: BlogAnalysisParams
 ): Promise<Record<string, any>> {
   try {
@@ -51,6 +52,40 @@ export async function analyzeBlogContent(
     });
 
     const resultContent = completion.choices[0].message.content ?? "";
+
+    return JSON.parse(resultContent);
+  } catch (error) {
+    throw new Error("블로그 분석에 실패했습니다.");
+  }
+}
+
+/**
+ * Google Gemini 클라이언트를 생성합니다.
+ * Cloudflare Workers에서는 환경변수를 env를 통해 접근하기 때문에 함수 파라미터로 전달받습니다.
+ */
+function createGeminiClient(apiKey: string) {
+  return new GoogleGenAI({ apiKey });
+}
+
+export async function analyzeBlogContent(
+  params: BlogAnalysisParams
+): Promise<Record<string, any>> {
+  try {
+    const { blogContent, apiKey } = params;
+    const ai = createGeminiClient(apiKey);
+    const completion = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: [
+        { role: "user", parts: [{ text: commonPrompt }] },
+        { role: "user", parts: [{ text: blogContent }] },
+      ],
+      config: {
+        responseMimeType: "application/json",
+        responseJsonSchema: BlogAnalysisSchema,
+      },
+    });
+
+    const resultContent = completion.text ?? "";
 
     return JSON.parse(resultContent);
   } catch (error) {
