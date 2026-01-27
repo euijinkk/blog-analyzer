@@ -70,7 +70,6 @@ function createGeminiClient(apiKey: string) {
 export async function analyzeBlogContent(
   params: BlogAnalysisParams
 ): Promise<Record<string, any>> {
-  try {
     const { blogContent, apiKey } = params;
     const ai = createGeminiClient(apiKey);
     const completion = await ai.models.generateContent({
@@ -88,7 +87,4 @@ export async function analyzeBlogContent(
     const resultContent = completion.text ?? "";
 
     return JSON.parse(resultContent);
-  } catch (error) {
-    throw new Error("블로그 분석에 실패했습니다.");
-  }
 }

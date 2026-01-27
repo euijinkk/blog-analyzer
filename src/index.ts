@@ -158,7 +158,7 @@ export default Sentry.withSentry(
 
             return c.json(analysisResult);
           } catch (error) {
-            console.error(`블로그 분석 중 오류 발생:`, error);
+            Sentry.captureException(error);
 
             // 오류 메시지 추출
             let errorMessage = "서버 오류가 발생했습니다";
