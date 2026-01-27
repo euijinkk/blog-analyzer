@@ -109,10 +109,15 @@ const mediumPlatform: BlogPlatform = {
   name: "Medium",
   check: (hostname) => hostname === "medium.com",
   generateRssUrl: async (parsedUrl) => {
-    // Medium은 username에 따라 RSS URL이 달라지기 때문에 HTML에서 찾는 것이 필요
-    const rssUrl = await extractRssUrlFromHtml(parsedUrl.href);
-    if (rssUrl) {
-      return rssUrl;
+    // HTML에서 RSS URL 찾기 시도 (예외 발생 시 무시)
+    try {
+      const rssUrl = await extractRssUrlFromHtml(parsedUrl.href);
+      if (rssUrl) {
+        return rssUrl;
+      }
+    } catch (error) {
+      // HTML 추출 실패 시 폴백 로직으로 진행 (403 Forbidden 등)
+      console.log("Medium HTML 추출 실패, 패턴 기반 URL 생성", error);
     }
 
     // HTML에서 찾지 못했다면, 추측된 URL 사용
@@ -136,10 +141,15 @@ const brunchPlatform: BlogPlatform = {
   name: "Brunch",
   check: (hostname) => hostname === "brunch.co.kr",
   generateRssUrl: async (parsedUrl) => {
-    // HTML에서 RSS URL 찾기
-    const rssUrl = await extractRssUrlFromHtml(parsedUrl.href);
-    if (rssUrl) {
-      return rssUrl;
+    // HTML에서 RSS URL 찾기 시도 (예외 발생 시 무시)
+    try {
+      const rssUrl = await extractRssUrlFromHtml(parsedUrl.href);
+      if (rssUrl) {
+        return rssUrl;
+      }
+    } catch (error) {
+      // HTML 추출 실패 시 폴백 로직으로 진행
+      console.log("Brunch HTML 추출 실패, 패턴 기반 URL 생성", error);
     }
 
     // HTML에서 찾지 못했다면, 표준 형식 사용
@@ -217,10 +227,15 @@ export async function getRssFromUrl(url: string): Promise<string> {
       return url;
     }
 
-    // 원래 URL이 HTML이면 헨더에서 추출 시도
-    const rssUrl = await extractRssUrlFromHtml(url);
-    if (rssUrl) {
-      return rssUrl;
+    // 원래 URL이 HTML이면 헨더에서 추출 시도 (예외 발생 시 무시)
+    try {
+      const rssUrl = await extractRssUrlFromHtml(url);
+      if (rssUrl) {
+        return rssUrl;
+      }
+    } catch (error) {
+      // HTML에서 추출 실패 시 플랫폼별 폴백 로직으로 진행
+      console.log("HTML에서 RSS URL 추출 실패, 플랫폼별 폴백 시도", error);
     }
 
     const parsedUrl = parseAndValidateUrl(url);

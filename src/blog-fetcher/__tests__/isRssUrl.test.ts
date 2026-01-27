@@ -27,9 +27,11 @@ describe("isRssUrl", () => {
             "https://example.com/atom.xml",
             "https://example.com/atom.xml?page=1",
 
-            // /feeds/, /atom/ 디렉토리 패턴
+            // /feeds/, /feed/, /atom/ 디렉토리 패턴
             "https://example.com/feeds/all.xml",
             "https://example.com/feeds/posts.json",
+            "https://example.com/feed/@username",
+            "https://medium.com/feed/@username",
             "https://example.com/atom/entries",
 
             // 쿼리 파라미터 패턴

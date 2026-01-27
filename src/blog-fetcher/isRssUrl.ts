@@ -17,6 +17,7 @@ export function isRssUrl(url: string): boolean {
         /\/feed\.(xml|json)($|\?)/,    // /feed.xml, /feed.json
         /\/atom\.xml($|\?)/,            // /atom.xml
         /\/feeds\//,                    // /feeds/ 디렉토리
+        /\/feed\//,                     // /feed/ 디렉토리 (Medium 형식)
         /\/atom\//,                     // /atom/ 디렉토리
     ];
 

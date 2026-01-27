@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { extractRssUrlFromHtml } from "../getRssFromUrl";
+import { extractRssUrlFromHtml } from "../extractRssUrlFromHtml";
 import ky from "ky";
 
 // ky 모듈 모킹
@@ -33,9 +33,9 @@ describe("RSS URL 추출 테스트", () => {
     // ky.get 모킹
     vi.mocked(ky.get).mockImplementation(
       () =>
-        ({
-          text: () => Promise.resolve(htmlContent),
-        } as any)
+      ({
+        text: () => Promise.resolve(htmlContent),
+      } as any)
     );
 
     const result = await extractRssUrlFromHtml(blogUrl);
@@ -56,9 +56,9 @@ describe("RSS URL 추출 테스트", () => {
 
     vi.mocked(ky.get).mockImplementation(
       () =>
-        ({
-          text: () => Promise.resolve(htmlContent),
-        } as any)
+      ({
+        text: () => Promise.resolve(htmlContent),
+      } as any)
     );
 
     const result = await extractRssUrlFromHtml(blogUrl);
@@ -78,9 +78,9 @@ describe("RSS URL 추출 테스트", () => {
 
     vi.mocked(ky.get).mockImplementation(
       () =>
-        ({
-          text: () => Promise.resolve(htmlContent),
-        } as any)
+      ({
+        text: () => Promise.resolve(htmlContent),
+      } as any)
     );
 
     const result = await extractRssUrlFromHtml(blogUrl);
@@ -100,9 +100,9 @@ describe("RSS URL 추출 테스트", () => {
 
     vi.mocked(ky.get).mockImplementation(
       () =>
-        ({
-          text: () => Promise.resolve(htmlContent),
-        } as any)
+      ({
+        text: () => Promise.resolve(htmlContent),
+      } as any)
     );
 
     const result = await extractRssUrlFromHtml(blogUrl);
@@ -122,9 +122,9 @@ describe("RSS URL 추출 테스트", () => {
 
     vi.mocked(ky.get).mockImplementation(
       () =>
-        ({
-          text: () => Promise.resolve(htmlContent),
-        } as any)
+      ({
+        text: () => Promise.resolve(htmlContent),
+      } as any)
     );
 
     const result = await extractRssUrlFromHtml(blogUrl);
@@ -144,9 +144,9 @@ describe("RSS URL 추출 테스트", () => {
 
     vi.mocked(ky.get).mockImplementation(
       () =>
-        ({
-          text: () => Promise.resolve(htmlContent),
-        } as any)
+      ({
+        text: () => Promise.resolve(htmlContent),
+      } as any)
     );
 
     const result = await extractRssUrlFromHtml(blogUrl);
