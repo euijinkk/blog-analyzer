@@ -16,6 +16,11 @@
     }
   },
 
+  "placement": {
+    "mode": "smart",
+    "hint": "wnam"
+  },  
+
   // KV 네임스페이스 설정
   "kv_namespaces": [
     {
