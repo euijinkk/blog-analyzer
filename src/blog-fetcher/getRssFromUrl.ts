@@ -1,41 +1,6 @@
-import ky from "ky";
+import { extractRssUrlFromHtml } from "./extractRssUrlFromHtml";
+import { isRssUrl } from "./isRssUrl";
 
-/**
- * HTML 페이지에서 RSS 피드 URL을 추출
- */
-export async function extractRssUrlFromHtml(
-  url: string
-): Promise<string | null> {
-  try {
-    // 웹 페이지 가져오기
-    const response = await ky.get(url).text();
-
-    // RSS 피드 링크 패턴 찾기
-    // 1. <link rel="alternate" type="application/rss+xml" href="..."> 형식
-    const rssLinkMatch =
-      response.match(
-        /<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/rss\+xml["\'][^>]*href=["\']([^"\'>]+)["\']/i
-      ) ||
-      response.match(
-        /<link[^>]*type=["\']application\/rss\+xml["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i
-      ) ||
-      response.match(
-        /<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/rss\+xml["\']/i
-      );
-
-    if (rssLinkMatch && rssLinkMatch[1]) {
-      // 상대 URL을 절대 URL로 변환
-      const rssUrl = new URL(rssLinkMatch[1], url).href;
-      return rssUrl;
-    }
-
-    // 2. 원하는 RSS 링크를 찾지 못한 경우
-    return null;
-  } catch (error) {
-    console.error("웹 페이지에서 RSS URL 추출 실패:", error);
-    throw error;
-  }
-}
 
 /**
  * 블로그 플랫폼 타입 정의
@@ -237,19 +202,6 @@ function parseAndValidateUrl(url: string): URL {
 }
 
 /**
- * URL이 이미 RSS URL인지 확인
- */
-function isRssUrl(url: string): boolean {
-  // URL에 'rss' 포함 또는 '.xml'로 끝나는지 확인
-  return (
-    url.toLowerCase().includes("/rss") ||
-    url.toLowerCase().includes("/feed") ||
-    url.toLowerCase().includes("rss.") ||
-    url.toLowerCase().endsWith(".xml")
-  );
-}
-
-/**
  * 지원하는 블로그 플랫폼 찾기
  */
 function findSupportedPlatform(hostname: string): BlogPlatform | null {
@@ -273,8 +225,6 @@ export async function getRssFromUrl(url: string): Promise<string> {
 
     const parsedUrl = parseAndValidateUrl(url);
     const { hostname } = parsedUrl;
-
-    console.log("hostname", hostname);
 
     // 지원하는 플랫폼 여부 확인
     const platform = findSupportedPlatform(hostname);

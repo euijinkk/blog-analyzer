@@ -27,11 +27,18 @@ describe("isRssUrl", () => {
             "https://example.com/atom.xml",
             "https://example.com/atom.xml?page=1",
 
+            // /feeds/, /atom/ 디렉토리 패턴
+            "https://example.com/feeds/all.xml",
+            "https://example.com/feeds/posts.json",
+            "https://example.com/atom/entries",
+
             // 쿼리 파라미터 패턴
             "https://example.com/blog?feed=rss",
             "https://example.com/blog?format=rss",
             "https://example.com/blog?type=rss",
             "https://example.com/blog?page=1&feed=rss",
+            "https://example.com/blog?format=atom",
+            "https://example.com/blog?type=json",
 
             // 대소문자 무시
             "https://example.com/RSS",
