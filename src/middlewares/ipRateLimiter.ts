@@ -1,4 +1,6 @@
 import { Context, MiddlewareHandler, Next } from "hono";
+import * as Sentry from "@sentry/cloudflare";
+
 
 type RateLimitInfo = {
   count: number;
@@ -162,10 +164,7 @@ export const ipRateLimiter = (): MiddlewareHandler<{
       // 제한을 초과하지 않으면 다음 미들웨어/핸들러로 이동
       await next();
     } catch (error) {
-      console.error(
-        "짧은 시간에 너무 많이 요청했습니다. 잠시 후 다시 이용해주세요.",
-        error
-      );
+      Sentry.captureException("짧은 시간에 너무 많이 요청했습니다. 잠시 후 다시 이용해주세요.");
       // 오류 발생 시 요청 처리 허용 (실패 안전)
       await next();
     }
