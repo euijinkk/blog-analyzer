@@ -109,17 +109,6 @@ const mediumPlatform: BlogPlatform = {
   name: "Medium",
   check: (hostname) => hostname === "medium.com",
   generateRssUrl: async (parsedUrl) => {
-    // HTML에서 RSS URL 찾기 시도 (예외 발생 시 무시)
-    try {
-      const rssUrl = await extractRssUrlFromHtml(parsedUrl.href);
-      if (rssUrl) {
-        return rssUrl;
-      }
-    } catch (error) {
-      // HTML 추출 실패 시 폴백 로직으로 진행 (403 Forbidden 등)
-      console.log("Medium HTML 추출 실패, 패턴 기반 URL 생성", error);
-    }
-
     // HTML에서 찾지 못했다면, 추측된 URL 사용
     // Medium 형식: https://medium.com/feed/@username
     const username = parsedUrl.pathname.match(/^\/@([^/]+)/);
