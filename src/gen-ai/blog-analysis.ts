@@ -70,21 +70,21 @@ function createGeminiClient(apiKey: string) {
 export async function analyzeBlogContent(
   params: BlogAnalysisParams
 ): Promise<Record<string, any>> {
-    const { blogContent, apiKey } = params;
-    const ai = createGeminiClient(apiKey);
-    const completion = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: [
-        { role: "user", parts: [{ text: commonPrompt }] },
-        { role: "user", parts: [{ text: blogContent }] },
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseJsonSchema: BlogAnalysisSchema,
-      },
-    });
+  const { blogContent, apiKey } = params;
+  const ai = createGeminiClient(apiKey);
+  const completion = await ai.models.generateContent({
+    model: "gemini-2.5-flash-lite",
+    contents: [
+      { role: "user", parts: [{ text: commonPrompt }] },
+      { role: "user", parts: [{ text: blogContent }] },
+    ],
+    config: {
+      responseMimeType: "application/json",
+      responseJsonSchema: BlogAnalysisSchema,
+    },
+  });
 
-    const resultContent = completion.text ?? "";
+  const resultContent = completion.text ?? "";
 
-    return JSON.parse(resultContent);
+  return JSON.parse(resultContent);
 }
