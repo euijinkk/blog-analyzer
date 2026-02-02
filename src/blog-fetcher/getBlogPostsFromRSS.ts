@@ -1,7 +1,7 @@
-import { XMLParser } from "fast-xml-parser";
-import { MAX_POST_LENGTH, MAX_POSTS } from "./constants";
-import { RSSPostType } from "./type";
-import ky from "ky";
+import { XMLParser } from 'fast-xml-parser';
+import { MAX_POST_LENGTH, MAX_POSTS } from './constants';
+import { RSSPostType } from './type';
+import ky from 'ky';
 
 const removeHtmlTags = (html: string) => {
   // 코드 블록을 임시로 저장하고 플레이스홀더로 대체
@@ -16,11 +16,11 @@ const removeHtmlTags = (html: string) => {
 
   // 코드 블록 외의 HTML 태그 제거
   processedHtml = processedHtml
-    .replace(/<[^>]+>/g, "") // HTML 태그 제거
-    .replace(/&nbsp;/g, " ") // &nbsp; 를 공백으로 변환
+    .replace(/<[^>]+>/g, '') // HTML 태그 제거
+    .replace(/&nbsp;/g, ' ') // &nbsp; 를 공백으로 변환
     .replace(/&quot;/g, '"') // &quot; 를 큰따옴표로 변환
-    .replace(/&amp;/g, "&") // &amp; 를 &로 변환
-    .replace(/\s+/g, " "); // 연속된 공백을 하나로 변환
+    .replace(/&amp;/g, '&') // &amp; 를 &로 변환
+    .replace(/\s+/g, ' '); // 연속된 공백을 하나로 변환
 
   // 코드 블록 복원
   codeBlocks.forEach((block, index) => {
@@ -46,14 +46,14 @@ const parseXmlToRssPosts = (xmlText: string): RSSPostType[] => {
 
   // 각 item에서 필요한 정보 추출
   return itemsArray.map((item) => ({
-    title: item.title ?? "",
-    author: item.author ?? "",
-    description: removeHtmlTags(item.description ?? "").slice(
+    title: item.title ?? '',
+    author: item.author ?? '',
+    description: removeHtmlTags(item.description ?? '').slice(
       0,
       MAX_POST_LENGTH
     ),
-    pubDate: item.pubDate ?? "",
-    link: item.link ?? "",
+    pubDate: item.pubDate ?? '',
+    link: item.link ?? '',
   }));
 };
 
@@ -82,6 +82,6 @@ export const getBlogPostsFromRSS = async (
       throw new Error(`해당 블로그는 RSS 를 제대로 제공하지 않습니다.`);
     }
 
-    throw new Error("해당 블로그는 RSS 를 제대로 제공하지 않습니다.");
+    throw new Error('해당 블로그는 RSS 를 제대로 제공하지 않습니다.');
   }
 };

@@ -1,4 +1,4 @@
-import { RSSPostType } from "./type";
+import { RSSPostType } from './type';
 
 const MAX_DESCRIPTION_LENGTH = 1000;
 
@@ -18,5 +18,5 @@ ${blogPosts
 - 링크: ${blog.link}
 `
     )
-    .join("\n")}
-`;
+    .join('\n')}
+  `;
