@@ -1,13 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { extractRssUrlFromHtml } from "../extractRssUrlFromHtml";
-import ky from "ky";
-
-// ky 모듈 모킹
-vi.mock("ky", () => ({
-  default: {
-    get: vi.fn(),
-  },
-}));
+import { describe, it, expect } from "vitest";
+import { parseRssUrlFromHtml } from "../extractRssUrlFromHtml";
 
 interface TestCase {
   name: string;
@@ -224,42 +216,16 @@ const testCases: TestCase[] = [
   },
 ];
 
-describe("RSS URL 추출 테스트", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
+describe("parseRssUrlFromHtml", () => {
   it.each(testCases)(
     "$name",
-    async ({ blogUrl, htmlContent, expectedRssUrl }) => {
-      vi.mocked(ky.get).mockImplementation(
-        () =>
-          ({
-            text: () => Promise.resolve(htmlContent),
-          }) as any
-      );
-
-      const result = await extractRssUrlFromHtml(blogUrl);
-
+    ({ blogUrl, htmlContent, expectedRssUrl }) => {
+      const result = parseRssUrlFromHtml(htmlContent, blogUrl);
       expect(result).toBe(expectedRssUrl);
     }
   );
-});
 
-describe("RSS URL 추출 실패 케이스", () => {
-  beforeEach(() => {
-    vi.resetAllMocks();
-  });
-
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it("RSS 링크가 없으면 null을 반환해야 함", async () => {
+  it("RSS 링크가 없으면 null을 반환해야 함", () => {
     const htmlWithoutRss = `
       <html>
         <head>
@@ -268,27 +234,8 @@ describe("RSS URL 추출 실패 케이스", () => {
       </html>
     `;
 
-    vi.mocked(ky.get).mockImplementation(
-      () =>
-        ({
-          text: () => Promise.resolve(htmlWithoutRss),
-        }) as any
-    );
-
-    const result = await extractRssUrlFromHtml("https://example.com");
-
+    const result = parseRssUrlFromHtml(htmlWithoutRss, "https://example.com");
     expect(result).toBeNull();
   });
-
-  it("네트워크 에러 시 에러를 throw해야 함", async () => {
-    const networkError = new Error("Network error");
-
-    vi.mocked(ky.get).mockImplementation(() => {
-      throw networkError;
-    });
-
-    await expect(extractRssUrlFromHtml("https://example.com")).rejects.toThrow(
-      "Network error"
-    );
-  });
 });
+
