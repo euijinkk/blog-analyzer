@@ -214,6 +214,133 @@ const testCases: TestCase[] = [
     `,
     expectedRssUrl: "https://example.com/feed.xml",
   },
+  // 누락된 속성 순서: rel → href → type
+  {
+    name: "RSS+XML rel→href→type 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link rel="alternate" href="https://example.com/rss.xml" type="application/rss+xml">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss.xml",
+  },
+  // 누락된 속성 순서: type → href → rel
+  {
+    name: "RSS+XML type→href→rel 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/rss+xml" href="https://example.com/rss.xml" rel="alternate">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss.xml",
+  },
+  // 누락된 속성 순서: href → rel → type
+  {
+    name: "RSS+XML href→rel→type 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link href="https://example.com/rss.xml" rel="alternate" type="application/rss+xml">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss.xml",
+  },
+  // Atom+XML 누락된 순서
+  {
+    name: "Atom+XML type→href→rel 순서의 링크를 추출할 수 있어야 함 (2)",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/atom+xml" href="https://example.com/atom.xml" rel="alternate">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/atom.xml",
+  },
+  // JSON Feed 누락된 순서
+  {
+    name: "JSON Feed type→href→rel 순서의 링크를 추출할 수 있어야 함 (2)",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/feed+json" href="https://example.com/feed.json" rel="alternate">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // JSON 누락된 순서
+  {
+    name: "JSON type→href→rel 순서의 링크를 추출할 수 있어야 함 (2)",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/json" href="https://example.com/feed.json" rel="alternate">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // RDF+XML (RSS 1.0) - 신규 MIME 타입
+  {
+    name: "RDF+XML (RSS 1.0) rel→type→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link rel="alternate" type="application/rdf+xml" href="https://example.com/rss10.rdf">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss10.rdf",
+  },
+  {
+    name: "RDF+XML (RSS 1.0) type→rel→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/rdf+xml" rel="alternate" href="https://example.com/rss10.rdf">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss10.rdf",
+  },
+  {
+    name: "RDF+XML (RSS 1.0) href→type 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link href="https://example.com/rss10.rdf" type="application/rdf+xml" rel="alternate">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss10.rdf",
+  },
+  {
+    name: "RDF+XML (RSS 1.0) type→href→rel 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/rdf+xml" href="https://example.com/rss10.rdf" rel="alternate">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss10.rdf",
+  },
 ];
 
 describe("parseRssUrlFromHtml", () => {

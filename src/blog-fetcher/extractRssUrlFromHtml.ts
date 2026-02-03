@@ -1,60 +1,63 @@
 import ky from "ky";
 
 /**
+ * 지원하는 피드 MIME 타입 (우선순위 순)
+ */
+const FEED_MIME_TYPES = [
+    "application/rss+xml", // RSS 2.0
+    "application/atom+xml", // Atom
+    "application/rdf+xml", // RSS 1.0 (RDF)
+    "application/feed+json", // JSON Feed 1.1
+    "application/json", // JSON Feed 1.0
+] as const;
+
+/**
+ * 특정 MIME 타입에 대한 정규식 패턴 생성
+ * 모든 속성 순서 조합을 커버하는 4가지 패턴 반환
+ */
+function createPatternsForMimeType(mimeType: string): RegExp[] {
+    const escapedType = mimeType.replace(/[+]/g, "\\+");
+    return [
+        // rel → type → href
+        new RegExp(
+            `<link[^>]*rel=["']alternate["'][^>]*type=["']${escapedType}["'][^>]*href=["']([^"'>]+)["']`,
+            "i"
+        ),
+        // type → rel → href
+        new RegExp(
+            `<link[^>]*type=["']${escapedType}["'][^>]*rel=["']alternate["'][^>]*href=["']([^"'>]+)["']`,
+            "i"
+        ),
+        // href → type (rel 위치 무관)
+        new RegExp(
+            `<link[^>]*href=["']([^"'>]+)["'][^>]*type=["']${escapedType}["']`,
+            "i"
+        ),
+        // type → href (rel 위치 무관)
+        new RegExp(
+            `<link[^>]*type=["']${escapedType}["'][^>]*href=["']([^"'>]+)["']`,
+            "i"
+        ),
+    ];
+}
+
+/**
  * HTML 문자열에서 RSS URL 추출 (순수 함수)
  */
 export function parseRssUrlFromHtml(
     html: string,
     baseUrl: string
 ): string | null {
-    // RSS 피드 링크 패턴 찾기
-    // <link rel="alternate" type="application/rss+xml" href="..."> 형식
-    const rssLinkMatch =
-        // RSS+XML (application/rss+xml)
-        html.match(
-            /<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/rss\+xml["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*type=["\']application\/rss\+xml["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/rss\+xml["\']/i
-        ) ||
-        // Atom+XML (application/atom+xml)
-        // <link rel="alternate" type="application/atom+xml" title="어쩐지 오늘은 Feed" href="https://zzsza.github.io/feed.xml">
-        html.match(
-            /<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/atom\+xml["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*type=["\']application\/atom\+xml["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/atom\+xml["\']/i
-        ) ||
-        // JSON Feed (application/feed+json)
-        html.match(
-            /<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/feed\+json["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*type=["\']application\/feed\+json["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/feed\+json["\']/i
-        ) ||
-        // JSON Feed (application/json) - JSON Feed를 사용하는 일부 사이트에서 사용
-        html.match(
-            /<link[^>]*rel=["\']alternate["\'][^>]*type=["\']application\/json["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*type=["\']application\/json["\'][^>]*rel=["\']alternate["\'][^>]*href=["\']([^"\'>]+)["\']/i
-        ) ||
-        html.match(
-            /<link[^>]*href=["\']([^"\'>]+)["\''][^>]*type=["\']application\/json["\']/i
-        );
-
-    if (rssLinkMatch && rssLinkMatch[1]) {
-        // 상대 URL을 절대 URL로 변환
-        return new URL(rssLinkMatch[1], baseUrl).href;
+    // 각 MIME 타입에 대해 우선순위 순으로 검색
+    for (const mimeType of FEED_MIME_TYPES) {
+        const patterns = createPatternsForMimeType(mimeType);
+        for (const pattern of patterns) {
+            const match = html.match(pattern);
+            if (match && match[1]) {
+                // 상대 URL을 절대 URL로 변환
+                return new URL(match[1], baseUrl).href;
+            }
+        }
     }
 
     return null;
