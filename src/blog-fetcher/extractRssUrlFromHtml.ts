@@ -13,29 +13,40 @@ const FEED_MIME_TYPES = [
 
 /**
  * 특정 MIME 타입에 대한 정규식 패턴 생성
- * 모든 속성 순서 조합을 커버하는 4가지 패턴 반환
+ * rel="alternate", type, href 속성의 6가지 순서 조합을 모두 커버
+ * 모든 패턴에서 rel="alternate" 검증 필수
  */
 function createPatternsForMimeType(mimeType: string): RegExp[] {
     const escapedType = mimeType.replace(/[+]/g, "\\+");
     return [
-        // rel → type → href
+        // 1. rel → type → href
         new RegExp(
             `<link[^>]*rel=["']alternate["'][^>]*type=["']${escapedType}["'][^>]*href=["']([^"'>]+)["']`,
             "i"
         ),
-        // type → rel → href
+        // 2. rel → href → type
+        new RegExp(
+            `<link[^>]*rel=["']alternate["'][^>]*href=["']([^"'>]+)["'][^>]*type=["']${escapedType}["']`,
+            "i"
+        ),
+        // 3. type → rel → href
         new RegExp(
             `<link[^>]*type=["']${escapedType}["'][^>]*rel=["']alternate["'][^>]*href=["']([^"'>]+)["']`,
             "i"
         ),
-        // href → type (rel 위치 무관)
+        // 4. type → href → rel
         new RegExp(
-            `<link[^>]*href=["']([^"'>]+)["'][^>]*type=["']${escapedType}["']`,
+            `<link[^>]*type=["']${escapedType}["'][^>]*href=["']([^"'>]+)["'][^>]*rel=["']alternate["']`,
             "i"
         ),
-        // type → href (rel 위치 무관)
+        // 5. href → rel → type
         new RegExp(
-            `<link[^>]*type=["']${escapedType}["'][^>]*href=["']([^"'>]+)["']`,
+            `<link[^>]*href=["']([^"'>]+)["'][^>]*rel=["']alternate["'][^>]*type=["']${escapedType}["']`,
+            "i"
+        ),
+        // 6. href → type → rel
+        new RegExp(
+            `<link[^>]*href=["']([^"'>]+)["'][^>]*type=["']${escapedType}["'][^>]*rel=["']alternate["']`,
             "i"
         ),
     ];

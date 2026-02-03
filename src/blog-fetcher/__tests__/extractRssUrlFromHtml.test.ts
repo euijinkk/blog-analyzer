@@ -110,14 +110,14 @@ const testCases: TestCase[] = [
     `,
     expectedRssUrl: "https://example.com/atom.xml",
   },
-  // Atom+XML 패턴 3: href → type
+  // Atom+XML 패턴 3: href → type → rel
   {
-    name: "Atom+XML href→type 순서의 링크를 추출할 수 있어야 함",
+    name: "Atom+XML href→type→rel 순서의 링크를 추출할 수 있어야 함",
     blogUrl: "https://example.com",
     htmlContent: `
       <html>
         <head>
-          <link href="https://example.com/atom.xml" type="application/atom+xml">
+          <link href="https://example.com/atom.xml" type="application/atom+xml" rel="alternate">
         </head>
       </html>
     `,
@@ -149,14 +149,14 @@ const testCases: TestCase[] = [
     `,
     expectedRssUrl: "https://example.com/feed.json",
   },
-  // JSON Feed (application/feed+json) 패턴 3: href → type
+  // JSON Feed (application/feed+json) 패턴 3: href → type → rel
   {
-    name: "JSON Feed href→type 순서의 링크를 추출할 수 있어야 함",
+    name: "JSON Feed href→type→rel 순서의 링크를 추출할 수 있어야 함",
     blogUrl: "https://example.com",
     htmlContent: `
       <html>
         <head>
-          <link href="https://example.com/feed.json" type="application/feed+json">
+          <link href="https://example.com/feed.json" type="application/feed+json" rel="alternate">
         </head>
       </html>
     `,
@@ -188,14 +188,14 @@ const testCases: TestCase[] = [
     `,
     expectedRssUrl: "https://example.com/feed.json",
   },
-  // JSON (application/json) 패턴 3: href → type
+  // JSON (application/json) 패턴 3: href → type → rel
   {
-    name: "JSON href→type 순서의 링크를 추출할 수 있어야 함",
+    name: "JSON href→type→rel 순서의 링크를 추출할 수 있어야 함",
     blogUrl: "https://example.com",
     htmlContent: `
       <html>
         <head>
-          <link href="https://example.com/feed.json" type="application/json">
+          <link href="https://example.com/feed.json" type="application/json" rel="alternate">
         </head>
       </html>
     `,
@@ -363,6 +363,98 @@ describe("parseRssUrlFromHtml", () => {
 
     const result = parseRssUrlFromHtml(htmlWithoutRss, "https://example.com");
     expect(result).toBeNull();
+  });
+
+  describe("오탐 방지 (False Positive Prevention)", () => {
+    it("rel='stylesheet'인 link 태그는 매칭되지 않아야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link rel="stylesheet" type="application/rss+xml" href="https://example.com/fake-rss">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBeNull();
+    });
+
+    it("rel 속성이 없는 link 태그는 매칭되지 않아야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link type="application/rss+xml" href="https://example.com/fake-rss">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBeNull();
+    });
+
+    it("rel='preload'인 link 태그는 매칭되지 않아야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link rel="preload" type="application/rss+xml" href="https://example.com/fake-rss" as="fetch">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBeNull();
+    });
+
+    it("rel='canonical'인 link 태그는 매칭되지 않아야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link rel="canonical" type="application/rss+xml" href="https://example.com/fake-rss">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBeNull();
+    });
+  });
+
+  describe("우선순위 테스트", () => {
+    it("RSS와 Atom이 동시에 있을 때 RSS가 우선 선택되어야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link rel="alternate" type="application/atom+xml" href="https://example.com/atom.xml">
+            <link rel="alternate" type="application/rss+xml" href="https://example.com/rss.xml">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBe("https://example.com/rss.xml");
+    });
+
+    it("Atom과 JSON Feed가 동시에 있을 때 Atom이 우선 선택되어야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link rel="alternate" type="application/feed+json" href="https://example.com/feed.json">
+            <link rel="alternate" type="application/atom+xml" href="https://example.com/atom.xml">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBe("https://example.com/atom.xml");
+    });
+
+    it("RSS, Atom, JSON Feed가 모두 있을 때 RSS가 우선 선택되어야 함", () => {
+      const html = `
+        <html>
+          <head>
+            <link rel="alternate" type="application/feed+json" href="https://example.com/feed.json">
+            <link rel="alternate" type="application/atom+xml" href="https://example.com/atom.xml">
+            <link rel="alternate" type="application/rss+xml" href="https://example.com/rss.xml">
+          </head>
+        </html>
+      `;
+      const result = parseRssUrlFromHtml(html, "https://example.com");
+      expect(result).toBe("https://example.com/rss.xml");
+    });
   });
 });
 
