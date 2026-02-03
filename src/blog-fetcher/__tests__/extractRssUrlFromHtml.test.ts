@@ -14,10 +14,10 @@ interface TestCase {
   blogUrl: string;
   htmlContent: string;
   expectedRssUrl: string;
-  shouldVerifyCalledWith?: boolean;
 }
 
 const testCases: TestCase[] = [
+  // RSS+XML 패턴 1: rel → type → href
   {
     name: "티스토리 형식의 RSS 링크를 추출할 수 있어야 함",
     blogUrl: "https://happysisyphe.tistory.com",
@@ -66,8 +66,22 @@ const testCases: TestCase[] = [
     `,
     expectedRssUrl: "https://medium.com/feed/@euijinkk97",
   },
+  // RSS+XML 패턴 2: type → rel → href
   {
-    name: "다양한 속성 순서를 가진 RSS 링크를 추출할 수 있어야 함",
+    name: "RSS+XML type→rel→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/rss+xml" rel="alternate" href="https://example.com/rss">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/rss",
+  },
+  // RSS+XML 패턴 3: href → type
+  {
+    name: "RSS+XML href→type 순서의 링크를 추출할 수 있어야 함",
     blogUrl: "https://example.com",
     htmlContent: `
       <html>
@@ -78,6 +92,124 @@ const testCases: TestCase[] = [
     `,
     expectedRssUrl: "https://example.com/rss",
   },
+  // Atom+XML 패턴 1: rel → type → href
+  {
+    name: "Atom+XML rel→type→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://zzsza.github.io",
+    htmlContent: `
+      <html>
+        <head>
+          <link rel="alternate" type="application/atom+xml" title="어쩐지 오늘은 Feed" href="https://zzsza.github.io/feed.xml">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://zzsza.github.io/feed.xml",
+  },
+  // Atom+XML 패턴 2: type → rel → href
+  {
+    name: "Atom+XML type→rel→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/atom+xml" rel="alternate" href="https://example.com/atom.xml">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/atom.xml",
+  },
+  // Atom+XML 패턴 3: href → type
+  {
+    name: "Atom+XML href→type 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link href="https://example.com/atom.xml" type="application/atom+xml">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/atom.xml",
+  },
+  // JSON Feed (application/feed+json) 패턴 1: rel → type → href
+  {
+    name: "JSON Feed rel→type→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link rel="alternate" type="application/feed+json" href="https://example.com/feed.json">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // JSON Feed (application/feed+json) 패턴 2: type → rel → href
+  {
+    name: "JSON Feed type→rel→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/feed+json" rel="alternate" href="https://example.com/feed.json">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // JSON Feed (application/feed+json) 패턴 3: href → type
+  {
+    name: "JSON Feed href→type 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link href="https://example.com/feed.json" type="application/feed+json">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // JSON (application/json) 패턴 1: rel → type → href
+  {
+    name: "JSON rel→type→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link rel="alternate" type="application/json" href="https://example.com/feed.json">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // JSON (application/json) 패턴 2: type → rel → href
+  {
+    name: "JSON type→rel→href 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link type="application/json" rel="alternate" href="https://example.com/feed.json">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // JSON (application/json) 패턴 3: href → type
+  {
+    name: "JSON href→type 순서의 링크를 추출할 수 있어야 함",
+    blogUrl: "https://example.com",
+    htmlContent: `
+      <html>
+        <head>
+          <link href="https://example.com/feed.json" type="application/json">
+        </head>
+      </html>
+    `,
+    expectedRssUrl: "https://example.com/feed.json",
+  },
+  // 상대 경로 변환
   {
     name: "상대 경로 RSS 링크를 절대 경로로 변환할 수 있어야 함",
     blogUrl: "https://example.com/blog",
@@ -103,7 +235,7 @@ describe("RSS URL 추출 테스트", () => {
 
   it.each(testCases)(
     "$name",
-    async ({ blogUrl, htmlContent, expectedRssUrl, shouldVerifyCalledWith }) => {
+    async ({ blogUrl, htmlContent, expectedRssUrl }) => {
       vi.mocked(ky.get).mockImplementation(
         () =>
           ({
@@ -116,4 +248,47 @@ describe("RSS URL 추출 테스트", () => {
       expect(result).toBe(expectedRssUrl);
     }
   );
+});
+
+describe("RSS URL 추출 실패 케이스", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("RSS 링크가 없으면 null을 반환해야 함", async () => {
+    const htmlWithoutRss = `
+      <html>
+        <head>
+          <title>No RSS</title>
+        </head>
+      </html>
+    `;
+
+    vi.mocked(ky.get).mockImplementation(
+      () =>
+        ({
+          text: () => Promise.resolve(htmlWithoutRss),
+        }) as any
+    );
+
+    const result = await extractRssUrlFromHtml("https://example.com");
+
+    expect(result).toBeNull();
+  });
+
+  it("네트워크 에러 시 에러를 throw해야 함", async () => {
+    const networkError = new Error("Network error");
+
+    vi.mocked(ky.get).mockImplementation(() => {
+      throw networkError;
+    });
+
+    await expect(extractRssUrlFromHtml("https://example.com")).rejects.toThrow(
+      "Network error"
+    );
+  });
 });
