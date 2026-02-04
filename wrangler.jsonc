@@ -12,21 +12,21 @@
   // 로그 설정
   "observability": {
     "logs": {
-      "enabled": true
-    }
+      "enabled": true,
+    },
   },
 
   "placement": {
     "mode": "smart",
-    "hint": "wnam"
-  },  
+    "hint": "wnam",
+  },
 
   // KV 네임스페이스 설정
   "kv_namespaces": [
     {
       "binding": "RATE_LIMITS",
-      "id": "c0e85c619da54bba8161184dface0262"
-    }
+      "id": "c0e85c619da54bba8161184dface0262",
+    },
   ],
 
   // D1 데이터베이스 설정
@@ -34,12 +34,12 @@
     {
       "binding": "DB",
       "database_name": "blog-analysis-db",
-      "database_id": "c352d570-d087-47a1-85bd-5f0652c4b4fb"
-    }
+      "database_id": "c352d570-d087-47a1-85bd-5f0652c4b4fb",
+    },
   ],
 
   // 환경 변수 설정
   "vars": {
-    "NODE_ENV": "production"
-  }
+    "NODE_ENV": "production",
+  },
 }
