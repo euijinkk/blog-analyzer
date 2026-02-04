@@ -14,6 +14,7 @@ import {
   saveAnalysisResult,
 } from "./db/blog-analysis";
 import { D1Database } from "@cloudflare/workers-types";
+import { analyzeWritingTime } from "./utils/time-analyzer";
 
 import * as Sentry from "@sentry/cloudflare";
 
@@ -143,9 +144,22 @@ export default Sentry.withSentry(
             const blogPosts = await getBlogPostsFromRSS(rssUrl);
             const blogString = parseBlogIntoString({ blogPosts });
 
+            // 시간 분석 추가
+            const timeAnalysis = analyzeWritingTime(blogPosts);
+
+            // 프롬프트에 시간 정보 추가
+            const enhancedBlogContent = `
+${blogString}
+
+---
+[분석 참고 정보]
+- 평균 글쓰기 시간: ${timeAnalysis.averageWritingTime}
+- 시간대 분포: 아침 ${timeAnalysis.distribution.morning}개, 낮 ${timeAnalysis.distribution.afternoon}개, 저녁 ${timeAnalysis.distribution.evening}개, 밤 ${timeAnalysis.distribution.night}개
+`;
+
             // Gemini API 호출을 분리된 함수로 대체
             const analysisResult = await analyzeBlogContent({
-              blogContent: blogString,
+              blogContent: enhancedBlogContent,
               apiKey: env.GEMINI_API_KEY,
             });
 
