@@ -42,19 +42,11 @@ const BlogTendency = Type.Object({
   completeGrowth: TendencyAxis,
 });
 
-// MBTI 각 축의 증거 (글 1개)
-const MBTIEvidence = Type.Object({
-  title: Type.String(),
-  quote: Type.String(),
-  link: Type.String({ format: "uri" }),
-});
-
 // MBTI 각 축 확신도 (증거 포함)
 const MBTIAxisConfidence = Type.Object({
   score: Type.Number({ minimum: 0, maximum: 100 }),
   selected: Type.String(), // "I" | "E" 등
   explanation: Type.String(),
-  evidence: MBTIEvidence,
 });
 
 // MBTI 예측
