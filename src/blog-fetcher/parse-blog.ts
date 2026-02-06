@@ -1,4 +1,5 @@
 import { RSSPostType } from './type';
+import { analyzeWritingTime, formatTimeAnalysis } from '../utils/time-analyzer';
 
 const MAX_DESCRIPTION_LENGTH = 1000;
 
@@ -21,3 +22,17 @@ ${blogPosts
     )
     .join('\n')}
   `;
+
+export const buildAnalysisContent = ({
+  blogPosts,
+}: {
+  blogPosts: RSSPostType[];
+}): string => {
+  const blogString = parseBlogIntoString({ blogPosts });
+  const timeAnalysis = analyzeWritingTime(blogPosts);
+
+  return `${blogString}
+
+---
+${formatTimeAnalysis(timeAnalysis)}`;
+};

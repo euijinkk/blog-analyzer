@@ -72,3 +72,9 @@ export function analyzeWritingTime(posts: RSSPostType[]): TimeAnalysisResult {
     distribution,
   };
 }
+
+export function formatTimeAnalysis(result: TimeAnalysisResult): string {
+  return `[분석 참고 정보]
+- 평균 글쓰기 시간: ${result.averageWritingTime}
+- 시간대 분포: 아침 ${result.distribution.morning}개, 낮 ${result.distribution.afternoon}개, 저녁 ${result.distribution.evening}개, 밤 ${result.distribution.night}개`;
+}

@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import OpenAI from "openai";
 import { getBlogPostsFromRSS } from "./blog-fetcher/getBlogPostsFromRSS";
-import { parseBlogIntoString } from "./blog-fetcher/parse-blog";
+import { buildAnalysisContent } from "./blog-fetcher/parse-blog";
 import { z } from "zod";
 import { cors } from "hono/cors";
 import { getRssFromUrl } from "./blog-fetcher/getRssFromUrl";
@@ -14,8 +14,6 @@ import {
   saveAnalysisResult,
 } from "./db/blog-analysis";
 import { D1Database } from "@cloudflare/workers-types";
-import { analyzeWritingTime } from "./utils/time-analyzer";
-
 import * as Sentry from "@sentry/cloudflare";
 
 /**
@@ -138,24 +136,11 @@ export default Sentry.withSentry(
             // 2. 기존 결과가 없는 경우 새 분석 수행
             console.log(`새 분석 시작: ${rssUrl}`);
             const blogPosts = await getBlogPostsFromRSS(rssUrl);
-            const blogString = parseBlogIntoString({ blogPosts });
-
-            // 시간 분석 추가
-            const timeAnalysis = analyzeWritingTime(blogPosts);
-
-            // 프롬프트에 시간 정보 추가
-            const enhancedBlogContent = `
-${blogString}
-
----
-[분석 참고 정보]
-- 평균 글쓰기 시간: ${timeAnalysis.averageWritingTime}
-- 시간대 분포: 아침 ${timeAnalysis.distribution.morning}개, 낮 ${timeAnalysis.distribution.afternoon}개, 저녁 ${timeAnalysis.distribution.evening}개, 밤 ${timeAnalysis.distribution.night}개
-`;
+            const blogContent = buildAnalysisContent({ blogPosts });
 
             // Gemini API 호출을 분리된 함수로 대체
             const analysisResult = await analyzeBlogContent({
-              blogContent: enhancedBlogContent,
+              blogContent,
               apiKey: env.GEMINI_API_KEY,
             });
 
