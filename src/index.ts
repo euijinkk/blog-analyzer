@@ -32,6 +32,21 @@ interface Env {
   NODE_ENV?: string; // 개발 및 프로덕션 환경 구분을 위한 환경 변수
 }
 
+function getAllowedOrigins(isProd: boolean): string[] {
+  const localOrigins = [
+    "http://localhost:3000",
+    "http://localhost:4000",
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:5174",
+  ];
+
+  return isProd
+    ? ["https://blog-analyzer.pages.dev", ...localOrigins]
+    : localOrigins;
+}
+
 export default Sentry.withSentry(
   (env) => ({
     dsn: "https://7776e15d89cc7d29a34e1d6b09e7415c@o4507096805015552.ingest.us.sentry.io/4509118221254656",
@@ -54,29 +69,10 @@ export default Sentry.withSentry(
       // CORS 설정 - 개발 및 프로덕션 환경 구분
       const isProd = env.NODE_ENV === "production";
 
-      const allowedOrigins = isProd
-        ? [
-          "https://blog-analyzer.pages.dev",
-          "http://localhost:3000",
-          "http://localhost:4000",
-          "http://localhost:5173",
-          "http://localhost:5174",
-          "http://127.0.0.1:5173",
-          "http://127.0.0.1:5174",
-        ]
-        : [
-          "http://localhost:3000",
-          "http://localhost:4000",
-          "http://localhost:5173",
-          "http://localhost:5174",
-          "http://127.0.0.1:5173",
-          "http://127.0.0.1:5174",
-        ];
-
       app.use(
         "*",
         cors({
-          origin: allowedOrigins,
+          origin: getAllowedOrigins(isProd),
           allowMethods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
         })
       );
