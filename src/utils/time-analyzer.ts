@@ -1,25 +1,32 @@
 import { RSSPostType } from "../blog-fetcher/type";
 
+export interface TimeDistribution {
+  morning: number;
+  afternoon: number;
+  evening: number;
+  night: number;
+}
+
+export type TimeCategory = "아침형" | "낮형" | "저녁형" | "밤형";
+
 export interface TimeAnalysisResult {
   averageWritingTime: string; // "23:42"
-  timeCategory: "아침형" | "낮형" | "저녁형" | "밤형";
-  distribution: {
-    morning: number; // 05:00-11:59
-    afternoon: number; // 12:00-17:59
-    evening: number; // 18:00-21:59
-    night: number; // 22:00-04:59
-  };
+  timeCategory: TimeCategory;
+  distribution: TimeDistribution;
 }
 
 export function analyzeWritingTime(posts: RSSPostType[]): TimeAnalysisResult {
-  const hours: number[] = [];
+  const totalMinutes: number[] = [];
   const distribution = { morning: 0, afternoon: 0, evening: 0, night: 0 };
 
   for (const post of posts) {
     try {
       const date = new Date(post.pubDate);
       const hour = date.getHours();
-      hours.push(hour);
+      const minute = date.getMinutes();
+      // 0~4시(새벽)는 24~28시로 치환하여 야간 연속성 유지
+      const adjusted = hour < 5 ? (hour + 24) * 60 + minute : hour * 60 + minute;
+      totalMinutes.push(adjusted);
 
       // 시간대별 분류
       if (hour >= 5 && hour < 12) {
@@ -36,41 +43,38 @@ export function analyzeWritingTime(posts: RSSPostType[]): TimeAnalysisResult {
     }
   }
 
-  // 평균 시간 계산 (24시간 기준)
-  const avgHour =
-    hours.length > 0
-      ? Math.round(hours.reduce((a, b) => a + b, 0) / hours.length)
-      : 12; // 기본값: 낮 12시
+  // 평균 시간 계산 (분 단위, 자정 래핑 처리)
+  const avgTotalMinutes =
+    totalMinutes.length > 0
+      ? Math.round(totalMinutes.reduce((a, b) => a + b, 0) / totalMinutes.length) % (24 * 60)
+      : 12 * 60; // 기본값: 낮 12시
 
-  const avgMinute = 0; // 간단하게 정시로 처리
+  const avgHour = Math.floor(avgTotalMinutes / 60);
+  const avgMinute = avgTotalMinutes % 60;
   const averageWritingTime = `${String(avgHour).padStart(2, "0")}:${String(
     avgMinute
   ).padStart(2, "0")}`;
 
-  // 가장 많은 시간대 판별
-  let timeCategory: "아침형" | "낮형" | "저녁형" | "밤형";
-  const max = Math.max(
-    distribution.morning,
-    distribution.afternoon,
-    distribution.evening,
-    distribution.night
-  );
-
-  if (max === distribution.night) {
-    timeCategory = "밤형";
-  } else if (max === distribution.evening) {
-    timeCategory = "저녁형";
-  } else if (max === distribution.afternoon) {
-    timeCategory = "낮형";
-  } else {
-    timeCategory = "아침형";
-  }
+  const timeCategory = determineTimeCategory(distribution);
 
   return {
     averageWritingTime,
     timeCategory,
     distribution,
   };
+}
+
+const CATEGORY_MAP: { key: keyof TimeDistribution; label: TimeCategory }[] = [
+  { key: "night", label: "밤형" },
+  { key: "evening", label: "저녁형" },
+  { key: "afternoon", label: "낮형" },
+  { key: "morning", label: "아침형" },
+];
+
+export function determineTimeCategory(distribution: TimeDistribution): TimeCategory {
+  return CATEGORY_MAP.reduce((max, curr) =>
+    distribution[curr.key] > distribution[max.key] ? curr : max
+  ).label;
 }
 
 export function formatTimeAnalysis(result: TimeAnalysisResult): string {

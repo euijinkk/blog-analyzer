@@ -60,13 +60,8 @@ export default Sentry.withSentry(
     ): Promise<Response> {
       const app = new Hono<{ Bindings: Env }>();
 
-      const client: OpenAI = new OpenAI({
-        apiKey: env.OPENAI_API_KEY,
-      });
-
       // CORS 설정 - 개발 및 프로덕션 환경 구분
       const isProd = env.NODE_ENV === "production";
-
       app.use(
         "*",
         cors({
@@ -77,35 +72,6 @@ export default Sentry.withSentry(
 
       // API 엔드포인트에 IP 요청 제한 적용
       app.use("/analyze", ipRateLimiter());
-
-      app.get("/", (c) => {
-        return c.text("Hello Hono!");
-      });
-
-      app.get("/sentry-error", async (c) => {
-        try {
-          await getRssFromUrl("https://test.com");
-          return c.text("성공 (이 메시지는 보이지 않을 것입니다)");
-        } catch (e) {
-          // 에러를 캡처한 후 다시 던져서 스택 트레이스를 완전하게 유지
-          Sentry.captureException(e);
-        }
-      });
-
-      app.use("/ip-rate", ipRateLimiter());
-      app.get("/ip-rate", (c) => {
-        return c.body("test");
-      });
-
-      app.get("/parse-blog", async (c) => {
-        const res = await getBlogPostsFromRSS(
-          "https://happysisyphe.tistory.com"
-        );
-
-        console.log("res", res);
-
-        return c.json(res);
-      });
 
       app.post(
         "/analyze",
@@ -166,20 +132,6 @@ export default Sentry.withSentry(
           }
         }
       );
-
-      app.get("/test", async (c) => {
-        const completion = await client.chat.completions.create({
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "user",
-              content: "Write a one-sentence bedtime story about a unicorn.",
-            },
-          ],
-        });
-
-        return c.body(completion.choices[0].message.content ?? "");
-      });
 
       return app.fetch(request, env, ctx);
     },
