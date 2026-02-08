@@ -15,67 +15,90 @@ export interface TimeAnalysisResult {
   distribution: TimeDistribution;
 }
 
+export interface ParsedTime {
+  hour: number;
+  minute: number;
+}
+
+const DAWN_END_HOUR = 5;
+const MORNING_END_HOUR = 12;
+const AFTERNOON_END_HOUR = 18;
+const EVENING_END_HOUR = 22;
+
+const MINUTES_PER_HOUR = 60;
+const HOURS_PER_DAY = 24;
+const MINUTES_PER_DAY = HOURS_PER_DAY * MINUTES_PER_HOUR;
+const DEFAULT_MINUTES = 12 * MINUTES_PER_HOUR;
+
+const TIME_SLOTS: { max: number; slot: keyof TimeDistribution }[] = [
+  { max: DAWN_END_HOUR, slot: 'night' },
+  { max: MORNING_END_HOUR, slot: 'morning' },
+  { max: AFTERNOON_END_HOUR, slot: 'afternoon' },
+  { max: EVENING_END_HOUR, slot: 'evening' },
+];
+
+export function parsePubDates(posts: RSSPostType[]): ParsedTime[] {
+  const results: ParsedTime[] = [];
+  for (const post of posts) {
+    const date = new Date(post.pubDate);
+    if (isNaN(date.getTime())) {
+      console.warn(`pubDate 파싱 실패: ${post.pubDate}`);
+      continue;
+    }
+    results.push({ hour: date.getHours(), minute: date.getMinutes() });
+  }
+  return results;
+}
+
+export function classifyHourToSlot(hour: number): keyof TimeDistribution {
+  return TIME_SLOTS.find((s) => hour < s.max)?.slot ?? 'night';
+}
+
+export function calculateDistribution(
+  parsedTimes: ParsedTime[]
+): TimeDistribution {
+  const distribution: TimeDistribution = {
+    morning: 0,
+    afternoon: 0,
+    evening: 0,
+    night: 0,
+  };
+  for (const { hour } of parsedTimes) {
+    distribution[classifyHourToSlot(hour)]++;
+  }
+  return distribution;
+}
+
+function toAdjustedMinutes({ hour, minute }: ParsedTime): number {
+  return hour < DAWN_END_HOUR
+    ? (hour + HOURS_PER_DAY) * MINUTES_PER_HOUR + minute
+    : hour * MINUTES_PER_HOUR + minute;
+}
+
+export function calculateAverageTime(parsedTimes: ParsedTime[]): string {
+  if (parsedTimes.length === 0) {
+    const h = Math.floor(DEFAULT_MINUTES / MINUTES_PER_HOUR);
+    const m = DEFAULT_MINUTES % MINUTES_PER_HOUR;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  const total = parsedTimes.reduce((sum, t) => sum + toAdjustedMinutes(t), 0);
+  const avg = Math.round(total / parsedTimes.length) % MINUTES_PER_DAY;
+  const avgHour = Math.floor(avg / MINUTES_PER_HOUR);
+  const avgMinute = avg % MINUTES_PER_HOUR;
+  return `${String(avgHour).padStart(2, '0')}:${String(avgMinute).padStart(2, '0')}`;
+}
+
 export function analyzeWritingTime(posts: RSSPostType[]): TimeAnalysisResult {
-  const { distribution, averageWritingTime } = analyzePubDate(posts);
+  const parsedTimes = parsePubDates(posts);
+  const distribution = calculateDistribution(parsedTimes);
+  const averageWritingTime = calculateAverageTime(parsedTimes);
   const timeCategory = determineTimeCategory(distribution);
 
   return {
     averageWritingTime,
     timeCategory,
     distribution,
-  };
-}
-
-export function analyzePubDate(posts: RSSPostType[]): {
-  distribution: TimeDistribution;
-  averageWritingTime: string;
-} {
-  const totalMinutes: number[] = [];
-  const distribution = { morning: 0, afternoon: 0, evening: 0, night: 0 };
-
-  for (const post of posts) {
-    try {
-      const date = new Date(post.pubDate);
-      const hour = date.getHours();
-      const minute = date.getMinutes();
-      // 0~4시(새벽)는 24~28시로 치환하여 야간 연속성 유지
-      const adjusted =
-        hour < 5 ? (hour + 24) * 60 + minute : hour * 60 + minute;
-      totalMinutes.push(adjusted);
-
-      // 시간대별 분류
-      if (hour >= 5 && hour < 12) {
-        distribution.morning++;
-      } else if (hour >= 12 && hour < 18) {
-        distribution.afternoon++;
-      } else if (hour >= 18 && hour < 22) {
-        distribution.evening++;
-      } else {
-        distribution.night++;
-      }
-    } catch (error) {
-      console.warn(`pubDate 파싱 실패: ${post.pubDate}`);
-    }
-  }
-
-  // 평균 시간 계산 (분 단위, 자정 래핑 처리)
-  const avgTotalMinutes =
-    totalMinutes.length > 0
-      ? Math.round(
-          totalMinutes.reduce((a, b) => a + b, 0) / totalMinutes.length
-        ) %
-        (24 * 60)
-      : 12 * 60; // 기본값: 낮 12시
-
-  const avgHour = Math.floor(avgTotalMinutes / 60);
-  const avgMinute = avgTotalMinutes % 60;
-  const averageWritingTime = `${String(avgHour).padStart(2, '0')}:${String(
-    avgMinute
-  ).padStart(2, '0')}`;
-
-  return {
-    distribution,
-    averageWritingTime,
   };
 }
 
