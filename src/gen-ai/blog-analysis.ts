@@ -1,7 +1,7 @@
-import OpenAI from "openai";
-import { BlogAnalysisSchema } from "./schema";
-import { commonPrompt } from "./common-prompt";
-import { GoogleGenAI } from "@google/genai";
+import OpenAI from 'openai';
+import { BlogAnalysisSchema } from './schema';
+import { commonPrompt } from './common-prompt';
+import { GoogleGenAI } from '@google/genai';
 
 /**
  * OpenAI 클라이언트를 생성합니다.
@@ -33,29 +33,29 @@ export async function analyzeBlogContentWithOpenAI(
     const { blogContent, apiKey } = params;
     const client = createOpenAIClient(apiKey);
     const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: 'gpt-4o-mini',
       messages: [
-        { role: "system", content: commonPrompt },
+        { role: 'system', content: commonPrompt },
         {
-          role: "user",
+          role: 'user',
           content: blogContent,
         },
       ],
       response_format: {
-        type: "json_schema",
+        type: 'json_schema',
         json_schema: {
-          name: "output",
-          description: "분석 리포트 결과",
+          name: 'output',
+          description: '분석 리포트 결과',
           schema: BlogAnalysisSchema,
         },
       },
     });
 
-    const resultContent = completion.choices[0].message.content ?? "";
+    const resultContent = completion.choices[0].message.content ?? '';
 
     return JSON.parse(resultContent);
   } catch (error) {
-    throw new Error("블로그 분석에 실패했습니다.");
+    throw new Error('블로그 분석에 실패했습니다.');
   }
 }
 
@@ -73,18 +73,18 @@ export async function analyzeBlogContent(
   const { blogContent, apiKey } = params;
   const ai = createGeminiClient(apiKey);
   const completion = await ai.models.generateContent({
-    model: "gemini-2.5-flash-lite",
+    model: 'gemini-2.5-flash-lite',
     contents: [
-      { role: "user", parts: [{ text: commonPrompt }] },
-      { role: "user", parts: [{ text: blogContent }] },
+      { role: 'user', parts: [{ text: commonPrompt }] },
+      { role: 'user', parts: [{ text: blogContent }] },
     ],
     config: {
-      responseMimeType: "application/json",
+      responseMimeType: 'application/json',
       responseJsonSchema: BlogAnalysisSchema,
     },
   });
 
-  const resultContent = completion.text ?? "";
+  const resultContent = completion.text ?? '';
 
   return JSON.parse(resultContent);
 }

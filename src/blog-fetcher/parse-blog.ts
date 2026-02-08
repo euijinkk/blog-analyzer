@@ -11,16 +11,16 @@ export const parseBlogIntoString = ({
 작성자: ${blogPosts[0].author}
 
 ${blogPosts
-    .map(
-      (blog, index) => `
+  .map(
+    (blog, index) => `
 ### 글 ${index + 1}
 - 제목: ${blog.title}
 - 설명: ${blog.description.slice(0, MAX_DESCRIPTION_LENGTH)}
 - 작성일시: ${blog.pubDate}
 - 링크: ${blog.link}
 `
-    )
-    .join('\n')}
+  )
+  .join('\n')}
   `;
 
 export const buildAnalysisContent = ({

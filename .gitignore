@@ -34,3 +34,5 @@ lerna-debug.log*
 
 # Sentry Config File
 .sentryclirc
+
+.omc

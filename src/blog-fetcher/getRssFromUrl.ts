@@ -1,6 +1,5 @@
-import { extractRssUrlFromHtml } from "./extractRssUrlFromHtml";
-import { isRssUrl } from "./isRssUrl";
-
+import { extractRssUrlFromHtml } from './extractRssUrlFromHtml';
+import { isRssUrl } from './isRssUrl';
 
 /**
  * 블로그 플랫폼 타입 정의
@@ -17,19 +16,19 @@ type BlogPlatform = {
  * 티스토리 블로그 플랫폼
  */
 const tistoryPlatform: BlogPlatform = {
-  name: "티스토리",
-  check: (hostname) => hostname.endsWith("tistory.com"),
+  name: '티스토리',
+  check: (hostname) => hostname.endsWith('tistory.com'),
   generateRssUrl: (parsedUrl) =>
     `${parsedUrl.protocol}//${parsedUrl.hostname}/rss`,
-  exampleUrl: "example.tistory.com",
+  exampleUrl: 'example.tistory.com',
 };
 
 /**
  * 네이버 블로그 데스크톱 플랫폼
  */
 const naverDesktopPlatform: BlogPlatform = {
-  name: "네이버 블로그 (데스크톱)",
-  check: (hostname) => hostname === "blog.naver.com",
+  name: '네이버 블로그 (데스크톱)',
+  check: (hostname) => hostname === 'blog.naver.com',
   extractUsername: (parsedUrl) => {
     const match = parsedUrl.pathname.match(/^\/([^/]+)/);
     return match ? match[1] : null;
@@ -43,19 +42,19 @@ const naverDesktopPlatform: BlogPlatform = {
     }
     return `https://rss.blog.naver.com/${username}.xml`;
   },
-  exampleUrl: "blog.naver.com/username",
+  exampleUrl: 'blog.naver.com/username',
 };
 
 /**
  * 네이버 블로그 모바일 플랫폼
  */
 const naverMobilePlatform: BlogPlatform = {
-  name: "네이버 블로그 (모바일)",
-  check: (hostname) => hostname === "m.blog.naver.com",
+  name: '네이버 블로그 (모바일)',
+  check: (hostname) => hostname === 'm.blog.naver.com',
   extractUsername: (parsedUrl) => {
     // 1. 쿼리 파라미터에서 blogId 추출: ?blogId=gytks4
     const urlParams = new URLSearchParams(parsedUrl.search);
-    const blogId = urlParams.get("blogId");
+    const blogId = urlParams.get('blogId');
     if (blogId) {
       return blogId;
     }
@@ -77,15 +76,15 @@ const naverMobilePlatform: BlogPlatform = {
     }
     return `https://rss.blog.naver.com/${username}.xml`;
   },
-  exampleUrl: "m.blog.naver.com/username",
+  exampleUrl: 'm.blog.naver.com/username',
 };
 
 /**
  * 벨로그 플랫폼
  */
 const velogPlatform: BlogPlatform = {
-  name: "벨로그",
-  check: (hostname) => hostname === "velog.io",
+  name: '벨로그',
+  check: (hostname) => hostname === 'velog.io',
   extractUsername: (parsedUrl) => {
     const match = parsedUrl.pathname.match(/^\/\@([^/]+)/);
     return match ? match[1] : null;
@@ -99,15 +98,15 @@ const velogPlatform: BlogPlatform = {
     }
     return `https://v2.velog.io/rss/${username}`;
   },
-  exampleUrl: "velog.io/@username/posts",
+  exampleUrl: 'velog.io/@username/posts',
 };
 
 /**
  * Medium 플랫폼
  */
 const mediumPlatform: BlogPlatform = {
-  name: "Medium",
-  check: (hostname) => hostname === "medium.com",
+  name: 'Medium',
+  check: (hostname) => hostname === 'medium.com',
   generateRssUrl: async (parsedUrl) => {
     // HTML에서 찾지 못했다면, 추측된 URL 사용
     // Medium 형식: https://medium.com/feed/@username
@@ -120,15 +119,15 @@ const mediumPlatform: BlogPlatform = {
       `유효하지 않은 ${mediumPlatform.name} URL 형식입니다. 예시: https://${mediumPlatform.exampleUrl}`
     );
   },
-  exampleUrl: "medium.com/@username",
+  exampleUrl: 'medium.com/@username',
 };
 
 /**
  * Brunch 플랫폼
  */
 const brunchPlatform: BlogPlatform = {
-  name: "Brunch",
-  check: (hostname) => hostname === "brunch.co.kr",
+  name: 'Brunch',
+  check: (hostname) => hostname === 'brunch.co.kr',
   generateRssUrl: async (parsedUrl) => {
     // HTML에서 RSS URL 찾기 시도 (예외 발생 시 무시)
     try {
@@ -138,12 +137,12 @@ const brunchPlatform: BlogPlatform = {
       }
     } catch (error) {
       // HTML 추출 실패 시 폴백 로직으로 진행
-      console.log("Brunch HTML 추출 실패, 패턴 기반 URL 생성", error);
+      console.log('Brunch HTML 추출 실패, 패턴 기반 URL 생성', error);
     }
 
     // HTML에서 찾지 못했다면, 표준 형식 사용
     // Brunch 형식: https://brunch.co.kr/rss/@@username
-    const username = parsedUrl.pathname.split("/").filter(Boolean)[0];
+    const username = parsedUrl.pathname.split('/').filter(Boolean)[0];
     if (username) {
       return `https://brunch.co.kr/rss/@${username}`;
     }
@@ -152,14 +151,14 @@ const brunchPlatform: BlogPlatform = {
       `유효하지 않은 ${brunchPlatform.name} URL 형식입니다. 예시: https://${brunchPlatform.exampleUrl}`
     );
   },
-  exampleUrl: "brunch.co.kr/@username",
+  exampleUrl: 'brunch.co.kr/@username',
 };
 
 /**
  * 기타 플랫폼을 위한 기본 플랫폼
  */
 const genericPlatform: BlogPlatform = {
-  name: "기타 블로그",
+  name: '기타 블로그',
   check: () => true, // 항상 마지막에 처리되도록 기본값은 true
   generateRssUrl: async (parsedUrl) => {
     // HTML에서 RSS URL 찾기 시도
@@ -173,7 +172,7 @@ const genericPlatform: BlogPlatform = {
       `${parsedUrl.hostname}에서 RSS 피드 URL을 찾을 수 없습니다.`
     );
   },
-  exampleUrl: "example.com",
+  exampleUrl: 'example.com',
 };
 
 /**
@@ -224,7 +223,7 @@ export async function getRssFromUrl(url: string): Promise<string> {
       }
     } catch (error) {
       // HTML에서 추출 실패 시 플랫폼별 폴백 로직으로 진행
-      console.log("HTML에서 RSS URL 추출 실패, 플랫폼별 폴백 시도", error);
+      console.log('HTML에서 RSS URL 추출 실패, 플랫폼별 폴백 시도', error);
     }
 
     const parsedUrl = parseAndValidateUrl(url);

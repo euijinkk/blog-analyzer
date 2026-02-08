@@ -1,20 +1,20 @@
-import { Hono } from "hono";
-import { zValidator } from "@hono/zod-validator";
-import OpenAI from "openai";
-import { getBlogPostsFromRSS } from "./blog-fetcher/getBlogPostsFromRSS";
-import { buildAnalysisContent } from "./blog-fetcher/parse-blog";
-import { z } from "zod";
-import { cors } from "hono/cors";
-import { getRssFromUrl } from "./blog-fetcher/getRssFromUrl";
-import { analyzeBlogContent } from "./gen-ai/blog-analysis";
-import { ipRateLimiter } from "./middlewares/ipRateLimiter";
+import { Hono } from 'hono';
+import { zValidator } from '@hono/zod-validator';
+import OpenAI from 'openai';
+import { getBlogPostsFromRSS } from './blog-fetcher/getBlogPostsFromRSS';
+import { buildAnalysisContent } from './blog-fetcher/parse-blog';
+import { z } from 'zod';
+import { cors } from 'hono/cors';
+import { getRssFromUrl } from './blog-fetcher/getRssFromUrl';
+import { analyzeBlogContent } from './gen-ai/blog-analysis';
+import { ipRateLimiter } from './middlewares/ipRateLimiter';
 import {
   getLatestAnalysisByRssUrl,
   getLatestAnalysisByUrl,
   saveAnalysisResult,
-} from "./db/blog-analysis";
-import { D1Database } from "@cloudflare/workers-types";
-import * as Sentry from "@sentry/cloudflare";
+} from './db/blog-analysis';
+import { D1Database } from '@cloudflare/workers-types';
+import * as Sentry from '@sentry/cloudflare';
 
 /**
  * TODO:
@@ -32,23 +32,23 @@ interface Env {
 
 function getAllowedOrigins(isProd: boolean): string[] {
   const localOrigins = [
-    "http://localhost:3000",
-    "http://localhost:4000",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:5174",
+    'http://localhost:3000',
+    'http://localhost:4000',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://127.0.0.1:5173',
+    'http://127.0.0.1:5174',
   ];
 
   return isProd
-    ? ["https://blog-analyzer.pages.dev", ...localOrigins]
+    ? ['https://blog-analyzer.pages.dev', ...localOrigins]
     : localOrigins;
 }
 
 export default Sentry.withSentry(
   (env) => ({
-    dsn: "https://7776e15d89cc7d29a34e1d6b09e7415c@o4507096805015552.ingest.us.sentry.io/4509118221254656",
-    release: "blog-ai-analyzer@1.0.0", // 릴리스 식별자 추가
+    dsn: 'https://7776e15d89cc7d29a34e1d6b09e7415c@o4507096805015552.ingest.us.sentry.io/4509118221254656',
+    release: 'blog-ai-analyzer@1.0.0', // 릴리스 식별자 추가
     tracesSampleRate: 1.0,
     attachStacktrace: true,
   }),
@@ -61,29 +61,29 @@ export default Sentry.withSentry(
       const app = new Hono<{ Bindings: Env }>();
 
       // CORS 설정 - 개발 및 프로덕션 환경 구분
-      const isProd = env.NODE_ENV === "production";
+      const isProd = env.NODE_ENV === 'production';
       app.use(
-        "*",
+        '*',
         cors({
           origin: getAllowedOrigins(isProd),
-          allowMethods: ["GET", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"],
+          allowMethods: ['GET', 'POST', 'OPTIONS', 'PUT', 'PATCH', 'DELETE'],
         })
       );
 
       // API 엔드포인트에 IP 요청 제한 적용
-      app.use("/analyze", ipRateLimiter());
+      app.use('/analyze', ipRateLimiter());
 
       app.post(
-        "/analyze",
+        '/analyze',
         zValidator(
-          "json",
+          'json',
           z.object({
             blogUrl: z.string(),
           })
         ),
         async (c) => {
           try {
-            const { blogUrl } = c.req.valid("json");
+            const { blogUrl } = c.req.valid('json');
             const db = c.env.DB;
 
             // RSS URL을 가져옴
@@ -122,7 +122,7 @@ export default Sentry.withSentry(
             Sentry.captureException(error);
 
             // 오류 메시지 추출
-            let errorMessage = "서버 오류가 발생했습니다";
+            let errorMessage = '서버 오류가 발생했습니다';
             if (error instanceof Error) {
               errorMessage = error.message;
             }

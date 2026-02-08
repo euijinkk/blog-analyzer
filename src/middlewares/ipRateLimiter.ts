@@ -1,6 +1,5 @@
-import { Context, MiddlewareHandler, Next } from "hono";
-import * as Sentry from "@sentry/cloudflare";
-
+import { Context, MiddlewareHandler, Next } from 'hono';
+import * as Sentry from '@sentry/cloudflare';
 
 type RateLimitInfo = {
   count: number;
@@ -23,9 +22,9 @@ const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000;
  */
 const getClientIp = (c: Context): string => {
   return (
-    c.req.header("CF-Connecting-IP") ||
-    c.req.header("x-forwarded-for") ||
-    "unknown"
+    c.req.header('CF-Connecting-IP') ||
+    c.req.header('x-forwarded-for') ||
+    'unknown'
   );
 };
 
@@ -93,10 +92,10 @@ const setRateLimitHeaders = (
     0,
     MAX_REQUESTS_PER_HOUR - rateLimitInfo.count
   );
-  c.header("X-RateLimit-Limit", MAX_REQUESTS_PER_HOUR.toString());
-  c.header("X-RateLimit-Remaining", remainingRequests.toString());
+  c.header('X-RateLimit-Limit', MAX_REQUESTS_PER_HOUR.toString());
+  c.header('X-RateLimit-Remaining', remainingRequests.toString());
   c.header(
-    "X-RateLimit-Reset",
+    'X-RateLimit-Reset',
     (rateLimitInfo.timestamp + RATE_LIMIT_WINDOW_MS).toString()
   );
 };
@@ -123,7 +122,7 @@ const createRateLimitExceededResponse = (
   const resetTime = new Date(rateLimitInfo.timestamp + RATE_LIMIT_WINDOW_MS);
   return c.json(
     {
-      error: "Too many requests",
+      error: 'Too many requests',
       message: `Rate limit exceeded. Try again after ${resetTime.toLocaleString()}`,
       reset_at: resetTime.toISOString(),
     },
@@ -143,8 +142,8 @@ export const ipRateLimiter = (): MiddlewareHandler<{
       // 클라이언트 IP 주소 가져오기
       const clientIp = getClientIp(c);
 
-      if (clientIp === "unknown") {
-        return c.json({ error: "Could not determine client IP" }, 400);
+      if (clientIp === 'unknown') {
+        return c.json({ error: 'Could not determine client IP' }, 400);
       }
 
       // KV 저장소 키 생성
@@ -164,7 +163,9 @@ export const ipRateLimiter = (): MiddlewareHandler<{
       // 제한을 초과하지 않으면 다음 미들웨어/핸들러로 이동
       await next();
     } catch (error) {
-      Sentry.captureException("짧은 시간에 너무 많이 요청했습니다. 잠시 후 다시 이용해주세요.");
+      Sentry.captureException(
+        '짧은 시간에 너무 많이 요청했습니다. 잠시 후 다시 이용해주세요.'
+      );
       // 오류 발생 시 요청 처리 허용 (실패 안전)
       await next();
     }

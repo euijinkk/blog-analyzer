@@ -1,15 +1,15 @@
-import { Type } from "@sinclair/typebox";
+import { Type } from '@sinclair/typebox';
 
 // 8개 동물 캐릭터
 const AnimalCharacter = Type.Union([
-  Type.Literal("앵무새"),
-  Type.Literal("돌고래"),
-  Type.Literal("카멜레온"),
-  Type.Literal("매"),
-  Type.Literal("강아지"),
-  Type.Literal("늑대"),
-  Type.Literal("올빼미"),
-  Type.Literal("사자"),
+  Type.Literal('앵무새'),
+  Type.Literal('돌고래'),
+  Type.Literal('카멜레온'),
+  Type.Literal('매'),
+  Type.Literal('강아지'),
+  Type.Literal('늑대'),
+  Type.Literal('올빼미'),
+  Type.Literal('사자'),
 ]);
 
 // 캐릭터화
@@ -21,7 +21,7 @@ const Character = Type.Object({
 // 대표 글 + 핵심 문장
 const RepresentativePost = Type.Object({
   title: Type.String(),
-  link: Type.String({ format: "uri" }),
+  link: Type.String({ format: 'uri' }),
   coreSentence: Type.String(),
   explanation: Type.String(),
 });
@@ -52,28 +52,28 @@ const MBTIAxisConfidence = Type.Object({
 // MBTI 예측
 const MBTIPrediction = Type.Object({
   result: Type.Union([
-    Type.Literal("ISTJ"),
-    Type.Literal("ISFJ"),
-    Type.Literal("INFJ"),
-    Type.Literal("INTJ"),
-    Type.Literal("ISTP"),
-    Type.Literal("ISFP"),
-    Type.Literal("INFP"),
-    Type.Literal("INTP"),
-    Type.Literal("ESTP"),
-    Type.Literal("ESFP"),
-    Type.Literal("ENFP"),
-    Type.Literal("ENTP"),
-    Type.Literal("ESTJ"),
-    Type.Literal("ESFJ"),
-    Type.Literal("ENFJ"),
-    Type.Literal("ENTJ"),
+    Type.Literal('ISTJ'),
+    Type.Literal('ISFJ'),
+    Type.Literal('INFJ'),
+    Type.Literal('INTJ'),
+    Type.Literal('ISTP'),
+    Type.Literal('ISFP'),
+    Type.Literal('INFP'),
+    Type.Literal('INTP'),
+    Type.Literal('ESTP'),
+    Type.Literal('ESFP'),
+    Type.Literal('ENFP'),
+    Type.Literal('ENTP'),
+    Type.Literal('ESTJ'),
+    Type.Literal('ESFJ'),
+    Type.Literal('ENFJ'),
+    Type.Literal('ENTJ'),
   ]),
   confidence: Type.Object({
-    "E/I": MBTIAxisConfidence,
-    "S/N": MBTIAxisConfidence,
-    "T/F": MBTIAxisConfidence,
-    "J/P": MBTIAxisConfidence,
+    'E/I': MBTIAxisConfidence,
+    'S/N': MBTIAxisConfidence,
+    'T/F': MBTIAxisConfidence,
+    'J/P': MBTIAxisConfidence,
   }),
 });
 
