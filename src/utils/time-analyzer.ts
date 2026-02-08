@@ -16,6 +16,20 @@ export interface TimeAnalysisResult {
 }
 
 export function analyzeWritingTime(posts: RSSPostType[]): TimeAnalysisResult {
+  const { distribution, averageWritingTime } = analyzePubDate(posts);
+  const timeCategory = determineTimeCategory(distribution);
+
+  return {
+    averageWritingTime,
+    timeCategory,
+    distribution,
+  };
+}
+
+export function analyzePubDate(posts: RSSPostType[]): {
+  distribution: TimeDistribution;
+  averageWritingTime: string;
+} {
   const totalMinutes: number[] = [];
   const distribution = { morning: 0, afternoon: 0, evening: 0, night: 0 };
 
@@ -59,12 +73,9 @@ export function analyzeWritingTime(posts: RSSPostType[]): TimeAnalysisResult {
     avgMinute
   ).padStart(2, '0')}`;
 
-  const timeCategory = determineTimeCategory(distribution);
-
   return {
-    averageWritingTime,
-    timeCategory,
     distribution,
+    averageWritingTime,
   };
 }
 

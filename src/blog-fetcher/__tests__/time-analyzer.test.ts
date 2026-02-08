@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  analyzePubDate,
   analyzeWritingTime,
   determineTimeCategory,
   TimeDistribution,
@@ -19,6 +20,29 @@ describe('analyzeWritingTime', () => {
       averageWritingTime: '22:49',
       timeCategory: '밤형',
       distribution: { morning: 0, afternoon: 0, evening: 3, night: 7 },
+    });
+  });
+});
+
+// time zone 에 따른 다른 테스트 추가
+
+describe('calculateTimeDistribution', () => {
+  it('시간대 분포를 계산한다', () => {
+    // Given
+    const blogPosts = RSS_BLOG_POSTS;
+
+    //When
+    const result = analyzePubDate(blogPosts);
+
+    // Then
+    expect(result).toEqual({
+      distribution: {
+        morning: 0,
+        afternoon: 0,
+        evening: 3,
+        night: 7,
+      },
+      averageWritingTime: '22:49',
     });
   });
 });
