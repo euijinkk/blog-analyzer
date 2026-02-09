@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeAll } from 'vitest';
 import {
   analyzeWritingTime,
   determineTimeCategory,
   parsePubDates,
+  parseLocalTime,
   classifyHourToSlot,
   calculateDistribution,
   calculateAverageTime,
@@ -11,22 +12,53 @@ import {
 import { RSS_BLOG_POSTS } from '../../../fixtures/BLOG_POSTS';
 import { RSSPostType } from '../type';
 
-describe('analyzeWritingTime', () => {
-  it('RSS 에서 글 게시 시간을 확인하여, 평균 글쓰기 시간과 시간대 분포를 계산한다.', () => {
-    // Given
-    const blogPosts = RSS_BLOG_POSTS;
-
-    // When
-    const result = analyzeWritingTime(blogPosts);
-
-    // Then
-    expect(result).toEqual({
-      averageWritingTime: '22:49',
-      timeCategory: '밤형',
-      distribution: { morning: 0, afternoon: 0, evening: 3, night: 7 },
+describe.each(['UTC', 'Asia/Seoul', 'America/New_York'])(
+  'parseLocalTime (TZ=%s)',
+  (tz) => {
+    beforeAll(() => {
+      process.env.TZ = tz;
     });
-  });
-});
+
+    it('+0900 오프셋: 시간을 그대로 추출한다', () => {
+      expect(parseLocalTime('Sun, 18 Jan 2026 21:49:08 +0900')).toEqual({
+        hour: 21,
+        minute: 49,
+      });
+    });
+
+    it('+0000 오프셋: pubDate 의 Time Zone 시간을 그대로 추출한다', () => {
+      expect(parseLocalTime('Wed, 7 Jan 2026 13:08:23 +0000')).toEqual({
+        hour: 13,
+        minute: 8,
+      });
+    });
+
+    it('음수 오프셋(-0500): pubDate 의 Time Zone 시간을 그대로 추출한다', () => {
+      expect(parseLocalTime('Wed, 7 Jan 2026 08:30:00 -0500')).toEqual({
+        hour: 8,
+        minute: 30,
+      });
+    });
+  }
+);
+
+describe.each(['UTC', 'Asia/Seoul', 'America/New_York'])(
+  'analyzeWritingTime (TZ=%s)',
+  (tz) => {
+    beforeAll(() => {
+      process.env.TZ = tz;
+    });
+
+    it('어떤 타임존에서든 동일한 결과를 반환한다', () => {
+      const result = analyzeWritingTime(RSS_BLOG_POSTS);
+      expect(result).toEqual({
+        averageWritingTime: '22:49',
+        timeCategory: '밤형',
+        distribution: { morning: 0, afternoon: 0, evening: 3, night: 7 },
+      });
+    });
+  }
+);
 
 describe('determineTimeCategory', () => {
   it('시간 분포에 따라 시간 카테고리를 결정한다', () => {

@@ -37,15 +37,20 @@ const TIME_SLOTS: { max: number; slot: keyof TimeDistribution }[] = [
   { max: EVENING_END_HOUR, slot: 'evening' },
 ];
 
+export function parseLocalTime(pubDate: string): ParsedTime {
+  const match = pubDate.match(/(\d{2}):(\d{2}):\d{2}/);
+  if (!match) throw new Error(`Invalid pubDate format: ${pubDate}`);
+  return { hour: parseInt(match[1]), minute: parseInt(match[2]) };
+}
+
 export function parsePubDates(posts: RSSPostType[]): ParsedTime[] {
   const results: ParsedTime[] = [];
   for (const post of posts) {
-    const date = new Date(post.pubDate);
-    if (isNaN(date.getTime())) {
+    try {
+      results.push(parseLocalTime(post.pubDate));
+    } catch {
       console.warn(`pubDate 파싱 실패: ${post.pubDate}`);
-      continue;
     }
-    results.push({ hour: date.getHours(), minute: date.getMinutes() });
   }
   return results;
 }
