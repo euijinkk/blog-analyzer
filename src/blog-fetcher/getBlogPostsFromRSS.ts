@@ -31,12 +31,17 @@ const removeHtmlTags = (html: string) => {
 };
 
 /**
- * XML 텍스트를 파싱하여 RSSPostType[] 형태로 변환
+ * XML 텍스트를 파싱하여 posts와 channelTitle을 반환
  */
-const parseXmlToRssPosts = (xmlText: string): RSSPostType[] => {
+const parseXmlToRssPosts = (
+  xmlText: string
+): { posts: RSSPostType[]; channelTitle: string } => {
   // XML 파싱
   const parser = new XMLParser();
   const result = parser.parse(xmlText);
+
+  // 채널 제목 추출
+  const channelTitle = result.rss?.channel?.title ?? '';
 
   // RSS 피드의 구조에 따라 items 배열 접근
   const items = result.rss?.channel?.item.slice(0, MAX_POSTS) ?? [];
@@ -45,7 +50,7 @@ const parseXmlToRssPosts = (xmlText: string): RSSPostType[] => {
   const itemsArray: RSSPostType[] = Array.isArray(items) ? items : [items];
 
   // 각 item에서 필요한 정보 추출
-  return itemsArray.map((item) => ({
+  const posts = itemsArray.map((item) => ({
     title: item.title ?? '',
     author: item.author ?? '',
     description: removeHtmlTags(item.description ?? '').slice(
@@ -55,6 +60,8 @@ const parseXmlToRssPosts = (xmlText: string): RSSPostType[] => {
     pubDate: item.pubDate ?? '',
     link: item.link ?? '',
   }));
+
+  return { posts, channelTitle };
 };
 
 /**
@@ -67,15 +74,15 @@ const fetchRssContent = async (rssUrl: string): Promise<string> => {
 
 export const getBlogPostsFromRSS = async (
   rssUrl: string
-): Promise<RSSPostType[]> => {
+): Promise<{ posts: RSSPostType[]; channelTitle: string }> => {
   try {
     // RSS 피드 가져오기
     const xmlText = await fetchRssContent(rssUrl);
 
-    // XML 파싱 및 게시물 배열로 변환
-    const posts = parseXmlToRssPosts(xmlText);
+    // XML 파싱 및 게시물 배열과 채널 제목 가져오기
+    const { posts, channelTitle } = parseXmlToRssPosts(xmlText);
 
-    return posts;
+    return { posts, channelTitle };
   } catch (error: unknown) {
     // 사용자에게 보여줄 더 친절한 오류 메시지
     if (error instanceof Error) {

@@ -101,8 +101,8 @@ export default Sentry.withSentry(
 
             // 2. 기존 결과가 없는 경우 새 분석 수행
             console.log(`새 분석 시작: ${rssUrl}`);
-            const blogPosts = await getBlogPostsFromRSS(rssUrl);
-            const blogContent = buildAnalysisContent({ blogPosts });
+            const { posts, channelTitle } = await getBlogPostsFromRSS(rssUrl);
+            const blogContent = buildAnalysisContent({ blogPosts: posts });
 
             // Gemini API 호출을 분리된 함수로 대체
             const analysisResult = await analyzeBlogContent({
@@ -110,11 +110,12 @@ export default Sentry.withSentry(
               apiKey: env.GEMINI_API_KEY,
             });
 
-            // 3. 분석 결과를 DB에 저장 (RSS URL 기준)
+            // 3. 분석 결과를 DB에 저장 (RSS URL 기준, 블로그 제목 포함)
             await saveAnalysisResult(db, {
               rss_url: rssUrl,
               blog_url: blogUrl,
               analysis_result: JSON.stringify(analysisResult),
+              blog_title: channelTitle,
             });
 
             return c.json(analysisResult);

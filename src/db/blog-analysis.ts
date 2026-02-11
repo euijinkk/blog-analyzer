@@ -14,6 +14,7 @@ export interface BlogReport {
   id?: number;
   blog_rss_id: number;
   analysis_result: string;
+  blog_title: string;
   created_at?: string;
 }
 
@@ -179,9 +180,14 @@ export async function getLatestAnalysisByUrl(
  */
 export async function saveAnalysisResult(
   db: D1Database,
-  data: { rss_url: string; blog_url: string; analysis_result: string }
+  data: {
+    rss_url: string;
+    blog_url: string;
+    analysis_result: string;
+    blog_title: string;
+  }
 ): Promise<BlogAnalysisResult> {
-  const { rss_url, blog_url, analysis_result } = data;
+  const { rss_url, blog_url, analysis_result, blog_title } = data;
 
   // 1. 블로그 RSS 저장 또는 업데이트
   const blogRss = await saveBlogRss(db, { rss_url, blog_url });
@@ -190,12 +196,12 @@ export async function saveAnalysisResult(
     throw new Error('블로그 RSS ID를 가져올 수 없습니다.');
   }
 
-  // 2. 블로그 분석 보고서 저장 (v2 테이블에 저장)
+  // 2. 블로그 분석 보고서 저장 (v2 테이블에 저장, blog_title 포함)
   const reportResult = await db
     .prepare(
-      'INSERT INTO blog_report_v2 (blog_rss_id, analysis_result) VALUES (?, ?) RETURNING *'
+      'INSERT INTO blog_report_v2 (blog_rss_id, analysis_result, blog_title) VALUES (?, ?, ?) RETURNING *'
     )
-    .bind(blogRss.id, analysis_result)
+    .bind(blogRss.id, analysis_result, blog_title)
     .first<BlogReport>();
 
   if (!reportResult) {
