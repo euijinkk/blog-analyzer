@@ -9,11 +9,13 @@ export const ArticleQuerySchema = z.object({
 
 export type ArticleQuery = z.infer<typeof ArticleQuerySchema>;
 
-// DB JOIN 결과 row 타입 (blog_rss + blog_report_v2)
+// DB JOIN 결과 row 타입 (blog_rss + blog_report_v2 + article_view_counts)
 export type ArticleDbRow = Required<
   Pick<BlogReport, 'id' | 'analysis_result' | 'blog_title' | 'created_at'>
 > &
-  Pick<BlogRss, 'blog_url'>;
+  Pick<BlogRss, 'blog_url'> & {
+    view_count: number;
+  };
 
 // topTendency 응답 타입
 export interface TopTendency {
@@ -32,6 +34,7 @@ export interface ArticleResponse {
   representativePostTitle: string;
   topTendency: TopTendency;
   characterSummary: string;
+  viewCount: number;
   createdAt: string;
 }
 

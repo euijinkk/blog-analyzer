@@ -16,9 +16,11 @@ export async function getArticleList(
         b.blog_url,
         r.analysis_result,
         r.blog_title,
-        r.created_at
+        r.created_at,
+        COALESCE(v.view_count, 0) as view_count
       FROM blog_rss b
       JOIN blog_report_v2 r ON b.id = r.blog_rss_id
+      LEFT JOIN article_view_counts v ON r.id = v.blog_report_id
       WHERE r.blog_title IS NOT NULL
       ORDER BY ${orderClause}
       LIMIT ?

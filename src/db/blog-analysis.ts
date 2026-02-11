@@ -20,6 +20,7 @@ export interface BlogReport {
 
 // API 응답을 위한 통합 인터페이스
 export interface BlogAnalysisResult {
+  reportId: number;
   rssUrl: string;
   blogUrl: string;
   analysisResult: any; // 분석 결과는 JSON으로 파싱되어 반환됨
@@ -112,7 +113,7 @@ export async function getLatestAnalysisByRssUrl(
   const result = await db
     .prepare(
       `
-      SELECT b.rss_url, b.blog_url, r.analysis_result, r.created_at
+      SELECT r.id, b.rss_url, b.blog_url, r.analysis_result, r.created_at
       FROM blog_rss b
       JOIN blog_report_v2 r ON b.id = r.blog_rss_id
       WHERE b.rss_url = ?
@@ -122,6 +123,7 @@ export async function getLatestAnalysisByRssUrl(
     )
     .bind(rssUrl)
     .first<{
+      id: number;
       rss_url: string;
       blog_url: string;
       analysis_result: string;
@@ -131,6 +133,7 @@ export async function getLatestAnalysisByRssUrl(
   if (!result) return null;
 
   return {
+    reportId: result.id,
     rssUrl: result.rss_url,
     blogUrl: result.blog_url,
     analysisResult: JSON.parse(result.analysis_result),
@@ -149,7 +152,7 @@ export async function getLatestAnalysisByUrl(
   const result = await db
     .prepare(
       `
-      SELECT b.rss_url, b.blog_url, r.analysis_result, r.created_at
+      SELECT r.id, b.rss_url, b.blog_url, r.analysis_result, r.created_at
       FROM blog_rss b
       JOIN blog_report_v2 r ON b.id = r.blog_rss_id
       WHERE b.blog_url = ?
@@ -159,6 +162,7 @@ export async function getLatestAnalysisByUrl(
     )
     .bind(blogUrl)
     .first<{
+      id: number;
       rss_url: string;
       blog_url: string;
       analysis_result: string;
@@ -168,6 +172,7 @@ export async function getLatestAnalysisByUrl(
   if (!result) return null;
 
   return {
+    reportId: result.id,
     rssUrl: result.rss_url,
     blogUrl: result.blog_url,
     analysisResult: JSON.parse(result.analysis_result),
@@ -210,6 +215,7 @@ export async function saveAnalysisResult(
 
   // 3. 통합 결과 반환
   return {
+    reportId: reportResult.id!,
     rssUrl: rss_url,
     blogUrl: blog_url,
     analysisResult: JSON.parse(analysis_result),

@@ -10,10 +10,10 @@ import { analyzeBlogContent } from './gen-ai/blog-analysis';
 import { ipRateLimiter } from './middlewares/ipRateLimiter';
 import {
   getLatestAnalysisByRssUrl,
-  getLatestAnalysisByUrl,
   saveAnalysisResult,
 } from './db/blog-analysis';
 import { getArticleList } from './db/article-list';
+import { incrementViewCount } from './db/article-view-counts';
 import { ArticleQuerySchema } from './types/article-list';
 import { calculateTopTendency } from './utils/tendency-calculator';
 import { D1Database } from '@cloudflare/workers-types';
@@ -77,7 +77,7 @@ export default Sentry.withSentry(
       app.use('/analyze', ipRateLimiter());
 
       app.get(
-        '/api/articles',
+        '/articles',
         zValidator('query', ArticleQuerySchema),
         async (c) => {
           try {
@@ -99,6 +99,7 @@ export default Sentry.withSentry(
                   analysisResult.representativePost.title,
                 topTendency: calculateTopTendency(analysisResult),
                 characterSummary: analysisResult.character.summary,
+                viewCount: row.view_count,
                 createdAt: row.created_at,
               };
             });
@@ -109,6 +110,7 @@ export default Sentry.withSentry(
               hasMore: total > query.limit,
             });
           } catch (error) {
+            console.log('error', error);
             Sentry.captureException(error);
             return c.json(
               { error: '게시글 목록 조회 중 오류가 발생했습니다.' },
@@ -141,6 +143,7 @@ export default Sentry.withSentry(
             );
             if (existingAnalysis) {
               console.log(`기존 분석 결과 반환: ${rssUrl}`);
+              ctx.waitUntil(incrementViewCount(db, existingAnalysis.reportId));
               return c.json(existingAnalysis.analysisResult);
             }
 
@@ -156,12 +159,14 @@ export default Sentry.withSentry(
             });
 
             // 3. 분석 결과를 DB에 저장 (RSS URL 기준, 블로그 제목 포함)
-            await saveAnalysisResult(db, {
+            const savedResult = await saveAnalysisResult(db, {
               rss_url: rssUrl,
               blog_url: blogUrl,
               analysis_result: JSON.stringify(analysisResult),
               blog_title: channelTitle,
             });
+
+            ctx.waitUntil(incrementViewCount(db, savedResult.reportId));
 
             return c.json(analysisResult);
           } catch (error) {
