@@ -1,4 +1,4 @@
-import { Type } from '@sinclair/typebox';
+import { type Static, Type } from '@sinclair/typebox';
 
 // 8개 동물 캐릭터
 const AnimalCharacter = Type.Union([
@@ -27,14 +27,14 @@ const RepresentativePost = Type.Object({
 });
 
 // 성향 축 (공통 구조)
-const TendencyAxis = Type.Object({
+export const TendencyAxis = Type.Object({
   score: Type.Number({ minimum: 0, maximum: 100 }),
   label: Type.String(), // "밤형" | "아침형" 등
   description: Type.String(),
 });
 
 // 5개 성향 축
-const BlogTendency = Type.Object({
+export const BlogTendency = Type.Object({
   nightMorning: TendencyAxis,
   narrativeImpact: TendencyAxis,
   trendEssence: TendencyAxis,
@@ -97,3 +97,7 @@ export const BlogAnalysisSchema = Type.Object({
   mbtiPrediction: MBTIPrediction,
   fortune: Fortune,
 });
+
+// TypeScript 타입 추출
+export type TendencyAxisType = Static<typeof TendencyAxis>;
+export type BlogTendencyType = Static<typeof BlogTendency>;
