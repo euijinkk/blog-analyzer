@@ -20,6 +20,7 @@
     "db:tables:local": "npx wrangler d1 execute blog-analysis-db --local --command=\"SELECT name FROM sqlite_schema WHERE type='table'\"",
     "db:rss": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_rss LIMIT 10\" --remote",
     "db:reports": "npx wrangler d1 execute blog-analysis-db --command=\"SELECT * FROM blog_report LIMIT 10\" --remote",
+    "db:migrate:local": "npx wrangler d1 migrations apply blog-analysis-db --local",
     "sentry:inject": "sentry-cli sourcemaps inject --org euijin --project node-cloudflare-workers --release blog-ai-analyzer@1.0.0 ./dist",
     "sentry:upload": "sentry-cli sourcemaps upload --org euijin --project node-cloudflare-workers --release blog-ai-analyzer@1.0.0 ./dist"
   },
