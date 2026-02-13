@@ -5,6 +5,7 @@ export interface BlogRss {
   id?: number;
   rss_url: string;
   blog_url: string;
+  is_hidden: number;
   created_at?: string;
   updated_at?: string;
 }
@@ -221,4 +222,24 @@ export async function saveAnalysisResult(
     analysisResult: JSON.parse(analysis_result),
     createdAt: reportResult.created_at || new Date().toISOString(),
   };
+}
+
+export async function setBlogVisibility(
+  db: D1Database,
+  blogUrl: string,
+  hidden: boolean
+): Promise<{ id: number; blog_url: string; is_hidden: number } | null> {
+  const result = await db
+    .prepare(
+      `
+      UPDATE blog_rss
+      SET is_hidden = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE blog_url = ?
+      RETURNING id, blog_url, is_hidden
+    `
+    )
+    .bind(hidden ? 1 : 0, blogUrl)
+    .first<{ id: number; blog_url: string; is_hidden: number }>();
+
+  return result || null;
 }

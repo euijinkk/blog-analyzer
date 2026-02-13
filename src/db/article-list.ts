@@ -22,6 +22,7 @@ export async function getArticleList(
       JOIN blog_report_v2 r ON b.id = r.blog_rss_id
       LEFT JOIN article_view_counts v ON r.id = v.blog_report_id
       WHERE r.blog_title IS NOT NULL
+      AND b.is_hidden = 0
       ORDER BY ${orderClause}
       LIMIT ?
     `
@@ -42,6 +43,7 @@ export async function getTotalArticleCount(db: D1Database): Promise<number> {
       FROM blog_rss b
       JOIN blog_report_v2 r ON b.id = r.blog_rss_id
       WHERE r.blog_title IS NOT NULL
+      AND b.is_hidden = 0
     `
     )
     .first<{ count: number }>();

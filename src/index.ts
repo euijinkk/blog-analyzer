@@ -11,6 +11,7 @@ import { ipRateLimiter } from './middlewares/ipRateLimiter';
 import {
   getLatestAnalysisByRssUrl,
   saveAnalysisResult,
+  setBlogVisibility,
 } from './db/blog-analysis';
 import { getArticleList } from './db/article-list';
 import { incrementViewCount } from './db/article-view-counts';
@@ -117,6 +118,30 @@ export default Sentry.withSentry(
               500
             );
           }
+        }
+      );
+
+      app.patch(
+        '/admin/blog-visibility',
+        zValidator(
+          'json',
+          z.object({
+            blogUrl: z.string().url(),
+            hidden: z.boolean(),
+          })
+        ),
+        async (c) => {
+          const { blogUrl, hidden } = c.req.valid('json');
+          const updated = await setBlogVisibility(c.env.DB, blogUrl, hidden);
+
+          if (!updated) {
+            return c.json({ error: '대상 블로그를 찾을 수 없습니다.' }, 404);
+          }
+
+          return c.json({
+            blogUrl: updated.blog_url,
+            hidden: updated.is_hidden === 1,
+          });
         }
       );
 
