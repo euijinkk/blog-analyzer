@@ -40,7 +40,7 @@ function makeBlogTendency(scores: {
 }
 
 describe('calculateTopTendency', () => {
-  it('가장 큰 deviation을 가진 축을 선택한다', () => {
+  it('nightMorning 축은 topTendency 후보에서 제외한다', () => {
     const result = calculateTopTendency(
       makeBlogTendency({
         nightMorning: 92,
@@ -52,9 +52,9 @@ describe('calculateTopTendency', () => {
     );
 
     expect(result).toEqual({
-      label: '밤형',
-      score: 92,
-      axisName: 'nightMorning',
+      label: '서사형',
+      score: 60,
+      axisName: 'narrativeImpact',
     });
   });
 
@@ -76,21 +76,21 @@ describe('calculateTopTendency', () => {
     });
   });
 
-  it('동점 시 첫 번째 축을 선택한다', () => {
+  it('동점 시 고정 우선순위에 따라 먼저 나온 축을 선택한다', () => {
     const result = calculateTopTendency(
       makeBlogTendency({
-        nightMorning: 80,
-        narrativeImpact: 80,
-        trendEssence: 50,
+        nightMorning: 95,
+        narrativeImpact: 20,
+        trendEssence: 80,
         communicationUnilateral: 50,
         completeGrowth: 50,
       })
     );
 
     expect(result).toEqual({
-      label: '밤형',
-      score: 80,
-      axisName: 'nightMorning',
+      label: '임팩트형',
+      score: 20,
+      axisName: 'narrativeImpact',
     });
   });
 
@@ -130,7 +130,7 @@ describe('calculateTopTendency', () => {
     });
   });
 
-  it('모든 축이 50점이면 첫 번째 축을 선택한다', () => {
+  it('모든 축이 50점이면 후보 축의 첫 번째 축을 선택한다', () => {
     const result = calculateTopTendency(
       makeBlogTendency({
         nightMorning: 50,
@@ -142,9 +142,9 @@ describe('calculateTopTendency', () => {
     );
 
     expect(result).toEqual({
-      label: '밤형',
+      label: '서사형',
       score: 50,
-      axisName: 'nightMorning',
+      axisName: 'narrativeImpact',
     });
   });
 });

@@ -12,7 +12,12 @@ const AXIS_LABELS: Record<
   completeGrowth: { left: '완성형', right: '성장형' },
 };
 
-const AXIS_KEYS = Object.keys(AXIS_LABELS) as (keyof BlogTendencyType)[];
+const TOP_TENDENCY_AXIS_KEYS: (keyof BlogTendencyType)[] = [
+  'narrativeImpact',
+  'trendEssence',
+  'communicationUnilateral',
+  'completeGrowth',
+];
 
 export function calculateTopTendency(analysisResult: {
   blogTendency: BlogTendencyType;
@@ -20,9 +25,9 @@ export function calculateTopTendency(analysisResult: {
   const { blogTendency } = analysisResult;
 
   let maxDeviation = -1;
-  let topAxisKey: keyof BlogTendencyType = AXIS_KEYS[0];
+  let topAxisKey: keyof BlogTendencyType = TOP_TENDENCY_AXIS_KEYS[0];
 
-  for (const key of AXIS_KEYS) {
+  for (const key of TOP_TENDENCY_AXIS_KEYS) {
     const deviation = Math.abs(blogTendency[key].score - 50);
     if (deviation > maxDeviation) {
       maxDeviation = deviation;
