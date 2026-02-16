@@ -1,24 +1,11 @@
 import { Hono } from 'hono';
-import { zValidator } from '@hono/zod-validator';
-import OpenAI from 'openai';
-import { getBlogPostsFromRSS } from './blog-fetcher/getBlogPostsFromRSS';
-import { buildAnalysisContent } from './blog-fetcher/parse-blog';
-import { z } from 'zod';
 import { cors } from 'hono/cors';
-import { getRssFromUrl } from './blog-fetcher/getRssFromUrl';
-import { analyzeBlogContent } from './gen-ai/blog-analysis';
 import { ipRateLimiter } from './middlewares/ipRateLimiter';
-import {
-  getLatestAnalysisByRssUrl,
-  saveAnalysisResult,
-  setBlogVisibility,
-} from './db/blog-analysis';
-import { getArticleList } from './db/article-list';
-import { incrementViewCount } from './db/article-view-counts';
-import { ArticleQuerySchema } from './types/article-list';
-import { calculateTopTendency } from './utils/tendency-calculator';
 import { D1Database } from '@cloudflare/workers-types';
 import * as Sentry from '@sentry/cloudflare';
+import analyzeRoute from './routes/analyze.route';
+import articlesRoute from './routes/articles.route';
+import adminRoute from './routes/admin.route';
 
 /**
  * TODO:
@@ -26,7 +13,7 @@ import * as Sentry from '@sentry/cloudflare';
  * 3. 응답 톤 조절하기
  */
 
-interface Env {
+export interface Env {
   OPENAI_API_KEY: string;
   GEMINI_API_KEY: string;
   RATE_LIMITS: KVNamespace;
@@ -77,137 +64,9 @@ export default Sentry.withSentry(
       // API 엔드포인트에 IP 요청 제한 적용
       app.use('/analyze', ipRateLimiter());
 
-      app.get(
-        '/articles',
-        zValidator('query', ArticleQuerySchema),
-        async (c) => {
-          try {
-            const query = c.req.valid('query');
-            const db = c.env.DB;
-
-            const { rows, total } = await getArticleList(db, query);
-
-            const analyses = rows.map((row) => {
-              const analysisResult = JSON.parse(row.analysis_result);
-
-              return {
-                id: row.id.toString(),
-                blogUrl: row.blog_url,
-                characterName: analysisResult.character.animal,
-                authorName: row.blog_title,
-                mbti: analysisResult.mbtiPrediction.result,
-                representativePostTitle:
-                  analysisResult.representativePost.title,
-                topTendency: calculateTopTendency(analysisResult),
-                characterSummary: analysisResult.character.summary,
-                viewCount: row.view_count,
-                createdAt: row.created_at,
-              };
-            });
-
-            return c.json({
-              analyses,
-              total,
-              hasMore: total > query.limit,
-            });
-          } catch (error) {
-            console.log('error', error);
-            Sentry.captureException(error);
-            return c.json(
-              { error: '게시글 목록 조회 중 오류가 발생했습니다.' },
-              500
-            );
-          }
-        }
-      );
-
-      app.patch(
-        '/admin/blog-visibility',
-        zValidator(
-          'json',
-          z.object({
-            blogUrl: z.string().url(),
-            hidden: z.boolean(),
-          })
-        ),
-        async (c) => {
-          const { blogUrl, hidden } = c.req.valid('json');
-          const updated = await setBlogVisibility(c.env.DB, blogUrl, hidden);
-
-          if (!updated) {
-            return c.json({ error: '대상 블로그를 찾을 수 없습니다.' }, 404);
-          }
-
-          return c.json({
-            blogUrl: updated.blog_url,
-            hidden: updated.is_hidden === 1,
-          });
-        }
-      );
-
-      app.post(
-        '/analyze',
-        zValidator(
-          'json',
-          z.object({
-            blogUrl: z.string(),
-          })
-        ),
-        async (c) => {
-          try {
-            const { blogUrl } = c.req.valid('json');
-            const db = c.env.DB;
-
-            // RSS URL을 가져옴
-            const rssUrl = await getRssFromUrl(blogUrl);
-
-            // 1. DB에서 기존 분석 결과 확인 (RSS URL 기준)
-            const existingAnalysis = await getLatestAnalysisByRssUrl(
-              db,
-              rssUrl
-            );
-            if (existingAnalysis) {
-              console.log(`기존 분석 결과 반환: ${rssUrl}`);
-              ctx.waitUntil(incrementViewCount(db, existingAnalysis.reportId));
-              return c.json(existingAnalysis.analysisResult);
-            }
-
-            // 2. 기존 결과가 없는 경우 새 분석 수행
-            console.log(`새 분석 시작: ${rssUrl}`);
-            const { posts, channelTitle } = await getBlogPostsFromRSS(rssUrl);
-            const blogContent = buildAnalysisContent({ blogPosts: posts });
-
-            // Gemini API 호출을 분리된 함수로 대체
-            const analysisResult = await analyzeBlogContent({
-              blogContent,
-              apiKey: env.GEMINI_API_KEY,
-            });
-
-            // 3. 분석 결과를 DB에 저장 (RSS URL 기준, 블로그 제목 포함)
-            const savedResult = await saveAnalysisResult(db, {
-              rss_url: rssUrl,
-              blog_url: blogUrl,
-              analysis_result: JSON.stringify(analysisResult),
-              blog_title: channelTitle,
-            });
-
-            ctx.waitUntil(incrementViewCount(db, savedResult.reportId));
-
-            return c.json(analysisResult);
-          } catch (error) {
-            Sentry.captureException(error);
-
-            // 오류 메시지 추출
-            let errorMessage = '서버 오류가 발생했습니다';
-            if (error instanceof Error) {
-              errorMessage = error.message;
-            }
-
-            // 400 Bad Request 상태코드와 구조화된 오류 메시지 반환
-            return c.body(errorMessage, 400);
-          }
-        }
-      );
+      app.route('/analyze', analyzeRoute);
+      app.route('/articles', articlesRoute);
+      app.route('/admin', adminRoute);
 
       return app.fetch(request, env, ctx);
     },
