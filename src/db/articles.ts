@@ -1,5 +1,5 @@
 import { D1Database } from '@cloudflare/workers-types';
-import { ArticleDbRow, ArticleQuery } from '../types/article-list';
+import { ArticleDbRow, ArticleQuery } from '../types/articles.types';
 
 export async function getArticleList(
   db: D1Database,

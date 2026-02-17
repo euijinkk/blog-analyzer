@@ -1,8 +1,8 @@
 import { Hono } from 'hono';
 import { zValidator } from '@hono/zod-validator';
 import * as Sentry from '@sentry/cloudflare';
-import { getArticleList } from '../db/article-list';
-import { ArticleQuerySchema } from '../types/article-list';
+import { getArticleList } from '../db/articles';
+import { ArticleQuerySchema } from '../types/articles.types';
 import { calculateTopTendency } from '../utils/tendency-calculator';
 import type { Env } from '../index';
 

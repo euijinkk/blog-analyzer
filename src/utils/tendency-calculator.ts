@@ -1,4 +1,4 @@
-import { TopTendency } from '../types/article-list';
+import { TopTendency } from '../types/articles.types';
 import { type BlogTendencyType } from '../gen-ai/schema';
 
 const AXIS_LABELS: Record<
