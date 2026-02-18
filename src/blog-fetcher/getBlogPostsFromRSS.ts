@@ -1,5 +1,5 @@
 import { XMLParser } from 'fast-xml-parser';
-import { MAX_POST_LENGTH, MAX_POSTS } from './constants';
+import { MAX_POSTS } from './constants';
 import { RSSPostType } from './type';
 import ky from 'ky';
 
@@ -53,10 +53,7 @@ const parseXmlToRssPosts = (
   const posts = itemsArray.map((item) => ({
     title: item.title ?? '',
     author: item.author ?? '',
-    description: removeHtmlTags(item.description ?? '').slice(
-      0,
-      MAX_POST_LENGTH
-    ),
+    description: removeHtmlTags(item.description ?? ''),
     pubDate: item.pubDate ?? '',
     link: item.link ?? '',
   }));
@@ -84,7 +81,6 @@ export const getBlogPostsFromRSS = async (
 
     return { posts, channelTitle };
   } catch (error: unknown) {
-    // 사용자에게 보여줄 더 친절한 오류 메시지
     if (error instanceof Error) {
       throw new Error(`해당 블로그는 RSS 를 제대로 제공하지 않습니다.`);
     }
